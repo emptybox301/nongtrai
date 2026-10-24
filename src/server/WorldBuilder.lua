@@ -97,14 +97,14 @@ local function buildPlot(parent, index, origin)
 	local model = Instance.new("Model")
 	model.Name = "Plot" .. index
 
-	part({ Name = "Base", Size = Vector3.new(56, 1, 56), CFrame = cf * CFrame.new(0, 0.5, 0), Color = Color3.fromRGB(110, 75, 45), Material = Enum.Material.Ground, Parent = model })
+	part({ Name = "Base", Size = Vector3.new(56, 1, 78), CFrame = cf * CFrame.new(0, 0.5, 11), Color = Color3.fromRGB(110, 75, 45), Material = Enum.Material.Ground, Parent = model })
 	part({ Name = "PondArea", Size = Vector3.new(56, 0.2, 18), CFrame = cf * CFrame.new(0, 1.1, 18), Color = Color3.fromRGB(110, 170, 80), Material = Enum.Material.Grass, Parent = model })
 	-- viền gỗ
 	for _, info in ipairs({
 		{ Vector3.new(58, 1.5, 1), Vector3.new(0, 1.25, -28.5) },
-		{ Vector3.new(58, 1.5, 1), Vector3.new(0, 1.25, 28.5) },
-		{ Vector3.new(1, 1.5, 56), Vector3.new(-28.5, 1.25, 0) },
-		{ Vector3.new(1, 1.5, 56), Vector3.new(28.5, 1.25, 0) },
+		{ Vector3.new(58, 1.5, 1), Vector3.new(0, 1.25, 50.5) },
+		{ Vector3.new(1, 1.5, 78), Vector3.new(-28.5, 1.25, 11) },
+		{ Vector3.new(1, 1.5, 78), Vector3.new(28.5, 1.25, 11) },
 	}) do
 		part({ Size = info[1], CFrame = cf * CFrame.new(info[2]), Color = Color3.fromRGB(140, 95, 55), Material = Enum.Material.WoodPlanks, Parent = model })
 	end
@@ -171,6 +171,46 @@ local function buildPlot(parent, index, origin)
 		ponds[i] = { model = pondModel, water = water, rim = rim, click = click }
 	end
 
+	-- CHUỒNG GIA SÚC (phía sau ao)
+	local barnFolder = Instance.new("Folder")
+	barnFolder.Name = "Barn"
+	barnFolder.Parent = model
+	local wood = Color3.fromRGB(150, 95, 55)
+	part({ Name = "BarnGround", Size = Vector3.new(56, 0.2, 20), CFrame = cf * CFrame.new(0, 1.1, 39.5), Color = Color3.fromRGB(170, 140, 90), Material = Enum.Material.Sand, Parent = barnFolder })
+	local barnSign = part({ Name = "BarnSign", Size = Vector3.new(14, 2.4, 0.4), CFrame = cf * CFrame.new(0, 3, 28.6), Color = Color3.fromRGB(140, 60, 40), Parent = barnFolder })
+	surfaceText(barnSign, Enum.NormalId.Front, "🐄 Chuồng Gia Súc", Color3.new(1, 1, 1))
+	-- mái chuồng phía sau
+	part({ Name = "BarnBack", Size = Vector3.new(44, 9, 1), CFrame = cf * CFrame.new(-6, 5.5, 49.5), Color = Color3.fromRGB(180, 50, 45), Material = Enum.Material.WoodPlanks, Parent = barnFolder })
+	part({ Name = "BarnRoof", Size = Vector3.new(46, 0.8, 8), CFrame = cf * CFrame.new(-6, 10, 46) * CFrame.Angles(math.rad(-12), 0, 0), Color = Color3.fromRGB(120, 40, 35), Material = Enum.Material.Slate, Parent = barnFolder })
+	local pens = {}
+	for i = 1, Config.PenCount do
+		local pcf = cf * CFrame.new(-20 + (i - 1) * 14, 0, 40)
+		local penModel = Instance.new("Model")
+		penModel.Name = "Pen" .. i
+		local floor = part({ Name = "Floor", Size = Vector3.new(13, 0.4, 16), CFrame = pcf * CFrame.new(0, 1.3, 0), Color = Color3.fromRGB(200, 170, 100), Material = Enum.Material.Sand, Parent = penModel })
+		for _, info in ipairs({
+			{ Vector3.new(13, 1.6, 0.4), Vector3.new(0, 2.3, -8) },
+			{ Vector3.new(0.4, 1.6, 16), Vector3.new(-6.5, 2.3, 0) },
+			{ Vector3.new(0.4, 1.6, 16), Vector3.new(6.5, 2.3, 0) },
+		}) do
+			part({ Name = "Fence", Size = info[1], CFrame = pcf * CFrame.new(info[2]), Color = wood, Material = Enum.Material.Wood, Parent = penModel })
+		end
+		part({ Name = "Trough", Size = Vector3.new(4, 0.8, 1.2), CFrame = pcf * CFrame.new(0, 1.9, 5.5), Color = Color3.fromRGB(110, 75, 40), Material = Enum.Material.Wood, Parent = penModel })
+		local click = Instance.new("ClickDetector")
+		click.MaxActivationDistance = 45
+		click.Parent = penModel
+		penModel.PrimaryPart = floor
+		penModel.Parent = barnFolder
+		pens[i] = { model = penModel, floor = floor, click = click }
+	end
+	-- Bàn chế tạo thức ăn
+	local bench = part({ Name = "CraftBench", Size = Vector3.new(5, 3.4, 4), CFrame = cf * CFrame.new(23, 2.7, 40), Color = Color3.fromRGB(130, 85, 45), Material = Enum.Material.WoodPlanks, Parent = barnFolder })
+	part({ Name = "Pot", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, 2.2, 2.2), CFrame = bench.CFrame * CFrame.new(0, 2.5, 0) * CFrame.Angles(0, 0, math.rad(90)), Color = Color3.fromRGB(70, 70, 75), Material = Enum.Material.Metal, Parent = barnFolder })
+	local benchSign = part({ Name = "BenchSign", Size = Vector3.new(6, 1.6, 0.3), CFrame = cf * CFrame.new(23, 6, 42.2), Color = Color3.fromRGB(60, 40, 25), Parent = barnFolder })
+	surfaceText(benchSign, Enum.NormalId.Front, "🍲 Chế Tạo Thức Ăn", Color3.fromRGB(255, 240, 200))
+	local craftPrompt = makePrompt(bench, "Chế tạo thức ăn", "Bàn Chế Tạo")
+	craftPrompt:SetAttribute("Panel", "Barn")
+
 	model.Parent = parent
 
 	return {
@@ -179,6 +219,8 @@ local function buildPlot(parent, index, origin)
 		model = model,
 		tiles = tiles,
 		ponds = ponds,
+		pens = pens,
+		bench = bench,
 		ownerLabel = ownerLabel,
 		spawnCFrame = cf * CFrame.new(0, 4, -35) * CFrame.Angles(0, math.pi, 0),
 		owner = nil,
@@ -251,7 +293,7 @@ function WorldBuilder.build()
 	world.Parent = workspace
 
 	local sand = Color3.fromRGB(210, 190, 150)
-	part({ Name = "Ground", Size = Vector3.new(420, 2, 360), CFrame = CFrame.new(0, -1, 0), Color = Color3.fromRGB(100, 175, 70), Material = Enum.Material.Grass, Parent = world })
+	part({ Name = "Ground", Size = Vector3.new(420, 2, 400), CFrame = CFrame.new(0, -1, 0), Color = Color3.fromRGB(100, 175, 70), Material = Enum.Material.Grass, Parent = world })
 	part({ Name = "Road", Size = Vector3.new(300, 0.2, 24), CFrame = CFrame.new(0, 0.1, 0), Color = sand, Material = Enum.Material.Sand, Parent = world })
 	for _, pos in ipairs(PLOT_POSITIONS) do
 		local zMid = pos.Z > 0 and 32 or -32
@@ -277,6 +319,7 @@ function WorldBuilder.build()
 	makeStall(shops, Vector3.new(-25, 0, 0), "🌱 Hạt Giống", Color3.fromRGB(80, 180, 80), "SeedShop", "Mua hạt giống")
 	makeStall(shops, Vector3.new(25, 0, 0), "🐟 Thủy Sản", Color3.fromRGB(40, 150, 200), "FishShop", "Mua con giống")
 	makeStall(shops, Vector3.new(60, 0, 0), "💰 Bán Hàng", Color3.fromRGB(230, 190, 50), "Sell", "Bán nông sản, thủy sản")
+	makeStall(shops, Vector3.new(125, 0, 0), "🐄 Gia Súc", Color3.fromRGB(180, 70, 50), "AnimalShop", "Mua gia súc")
 
 	-- cây trang trí (tránh nông trại, nhà triển lãm và đường)
 	local function blocked(x, z)
@@ -284,7 +327,7 @@ function WorldBuilder.build()
 			return true
 		end
 		for _, pos in ipairs(PLOT_POSITIONS) do
-			if math.abs(x - pos.X) < 36 and math.abs(z - pos.Z) < 40 and math.sign(z) == math.sign(pos.Z) then
+			if math.abs(x - pos.X) < 36 and math.abs(z - pos.Z) < 62 and math.sign(z) == math.sign(pos.Z) then
 				return true
 			end
 			if math.abs(x - pos.X) < 9 and math.abs(z) < 56 then

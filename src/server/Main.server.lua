@@ -165,6 +165,7 @@ local function updateTileVisual(plot, idx, plant)
 end
 
 local updatePondVisual -- khai báo trước, định nghĩa ở phần AO NUÔI
+local updatePenVisual -- khai báo trước, định nghĩa ở phần CHUỒNG GIA SÚC
 
 local function refreshPlot(plot)
 	local data = plot.owner and DataService.get(plot.owner)
@@ -173,6 +174,9 @@ local function refreshPlot(plot)
 	end
 	for idx = 1, Config.PondCount do
 		updatePondVisual(plot, idx, data and data.ponds["p" .. idx] or nil)
+	end
+	for idx = 1, Config.PenCount do
+		updatePenVisual(plot, idx, data and data.pens["b" .. idx] or nil)
 	end
 end
 
@@ -190,7 +194,8 @@ local function rollMutation(data, buffs)
 end
 
 local function consumeSelected(player, data, kind, key)
-	local bag = (kind == "seed" and data.seeds) or (kind == "fry" and data.fry) or data.gear
+	local bags = { seed = data.seeds, fry = data.fry, animal = data.animals, feed = data.feed }
+	local bag = bags[kind] or data.gear
 	bag[key] = (bag[key] or 0) - 1
 	if bag[key] <= 0 then
 		bag[key] = nil
@@ -426,6 +431,166 @@ for _, plot in ipairs(plots) do
 end
 
 ----------------------------------------------------------------
+-- CHUỒNG GIA SÚC
+-- pen = { animal = "Ga", at = thời điểm cho ăn (nil = đang đói), time, feed, mut }
+----------------------------------------------------------------
+local function penReady(pen)
+	return pen.at ~= nil and os.time() - pen.at >= pen.time
+end
+
+updatePenVisual = function(plot, idx, pen)
+	local p = plot.pens[idx]
+	if not p.label then
+		p.label = Visuals.billboard(p.floor, "", Color3.new(1, 1, 1), 6)
+		p.label.Parent.MaxDistance = 45
+	end
+	if not pen then
+		if p.visual then
+			p.visual.model:Destroy()
+			p.visual = nil
+		end
+		p.label.Text = plot.owner and "Chuồng trống" or ""
+		p.label.TextColor3 = Color3.fromRGB(230, 220, 200)
+		return
+	end
+	if not p.visual or p.visual.animal ~= pen.animal then
+		if p.visual then
+			p.visual.model:Destroy()
+		end
+		local m = Visuals.makeAnimal(pen.animal)
+		local _, size = m:GetBoundingBox()
+		m:PivotTo(p.floor.CFrame * CFrame.new(0, 0.2 + size.Y / 2, -1) * CFrame.Angles(0, math.rad(math.random(-40, 40)), 0))
+		m.Parent = p.model
+		p.visual = { model = m, animal = pen.animal }
+	end
+	local a = Config.Animals[pen.animal]
+	local product = Config.Products[a.product]
+	if pen.at == nil then
+		p.label.Text = a.name .. " đói 🍽 cần " .. Config.Feeds[a.eats].name
+		p.label.TextColor3 = Color3.fromRGB(255, 170, 120)
+	elseif penReady(pen) then
+		p.label.Text = "✨ " .. PetUtil.cropName(a.product .. "|" .. (pen.mut or "Thuong")) .. " - Thu nhặt!"
+		p.label.TextColor3 = Color3.fromRGB(255, 240, 120)
+	else
+		p.label.Text = a.name .. " • " .. product.name .. " " .. PetUtil.formatTime(pen.time - (os.time() - pen.at))
+		p.label.TextColor3 = Color3.new(1, 1, 1)
+	end
+end
+
+local function findFeedFor(data, animalKey)
+	for _, feedKey in ipairs(Config.FeedOrder) do
+		if (data.feed[feedKey] or 0) > 0 and PetUtil.feedFits(feedKey, animalKey) then
+			return feedKey
+		end
+	end
+	return nil
+end
+
+local function feedPen(player, data, pen, feedKey)
+	local buffs = buffsOf(data)
+	data.feed[feedKey] -= 1
+	if data.feed[feedKey] <= 0 then
+		data.feed[feedKey] = nil
+		local sel = selected[player]
+		if sel and sel.kind == "feed" and sel.key == feedKey then
+			selected[player] = nil
+		end
+	end
+	if math.random() < buffs.Tho then
+		data.feed[feedKey] = (data.feed[feedKey] or 0) + 1
+		notify(player, "🪨 Pet hệ Thổ hoàn lại 1 " .. Config.Feeds[feedKey].name, "success")
+	end
+	local a = Config.Animals[pen.animal]
+	pen.at = os.time()
+	pen.time = math.max(5, math.floor(a.time / (1 + buffs.Moc * 0.5)))
+	pen.feed = feedKey
+	pen.mut = rollMutation(data, buffs)
+	notify(player, "🍽 Đã cho " .. a.name .. " ăn " .. Config.Feeds[feedKey].name, "success")
+end
+
+local function collectPen(player, data, pen)
+	local buffs = buffsOf(data)
+	local a = Config.Animals[pen.animal]
+	local feed = Config.Feeds[pen.feed or ""]
+	local amount = math.random(a.yield[1], a.yield[2]) * ((feed and feed.mult) or 1)
+	local extra = {}
+	if math.random() < buffs.Thuy then
+		amount *= 2
+		table.insert(extra, "💧 x2")
+	end
+	local key = a.product .. "|" .. (pen.mut or "Thuong")
+	data.crops[key] = (data.crops[key] or 0) + amount
+	pen.at, pen.time, pen.feed, pen.mut = nil, nil, nil, nil
+	local msg = string.format("Thu nhặt %d %s", amount, PetUtil.cropName(key))
+	if #extra > 0 then
+		msg ..= " (" .. table.concat(extra, ", ") .. ")"
+	end
+	notify(player, msg, key:find("Thuong") and "success" or "rare")
+end
+
+local function onPenClicked(player, plot, idx)
+	if plot.owner ~= player then
+		notify(player, "Đây không phải chuồng của bạn!", "error")
+		return
+	end
+	local data = DataService.get(player)
+	if not data then
+		return
+	end
+	local key = "b" .. idx
+	local pen = data.pens[key]
+	local sel = selected[player]
+	if not pen then
+		if sel and sel.kind == "animal" and (data.animals[sel.key] or 0) > 0 then
+			data.pens[key] = { animal = sel.key }
+			consumeSelected(player, data, "animal", sel.key)
+			notify(player, "🐾 Đã thả " .. Config.Animals[sel.key].name .. " vào chuồng", "success")
+		else
+			notify(player, "Mua gia súc ở quầy 🐄 Gia Súc, chọn ở thanh dưới rồi chạm vào chuồng trống", "info")
+			return
+		end
+	elseif sel and sel.kind == "gear" and sel.key == "Xeng" then
+		data.animals[pen.animal] = (data.animals[pen.animal] or 0) + 1
+		data.pens[key] = nil
+		notify(player, "Đã đưa " .. Config.Animals[pen.animal].name .. " về túi", "info")
+	elseif pen.at ~= nil then
+		if penReady(pen) then
+			collectPen(player, data, pen)
+		else
+			notify(player, "Còn " .. PetUtil.formatTime(pen.time - (os.time() - pen.at)) .. " nữa mới thu nhặt được", "info")
+			return
+		end
+	else
+		local feedKey
+		if sel and sel.kind == "feed" and (data.feed[sel.key] or 0) > 0 then
+			if not PetUtil.feedFits(sel.key, pen.animal) then
+				notify(player, Config.Animals[pen.animal].name .. " không ăn " .. Config.Feeds[sel.key].name, "error")
+				return
+			end
+			feedKey = sel.key
+		else
+			feedKey = findFeedFor(data, pen.animal)
+		end
+		if not feedKey then
+			local need = Config.Feeds[Config.Animals[pen.animal].eats]
+			notify(player, "Hết thức ăn! Chế tạo " .. need.name .. " ở 🍲 Bàn Chế Tạo cạnh chuồng", "error")
+			return
+		end
+		feedPen(player, data, pen, feedKey)
+	end
+	updatePenVisual(plot, idx, data.pens[key])
+	push(player)
+end
+
+for _, plot in ipairs(plots) do
+	for idx, p in ipairs(plot.pens) do
+		p.click.MouseClick:Connect(function(player)
+			onPenClicked(player, plot, idx)
+		end)
+	end
+end
+
+----------------------------------------------------------------
 -- PET THEO NGƯỜI CHƠI
 ----------------------------------------------------------------
 local function refreshPets(player)
@@ -629,11 +794,74 @@ function Actions.Select(player, data, kind, key)
 	elseif kind == "fry" and Config.Fish[key] and (data.fry[key] or 0) > 0 then
 		selected[player] = { kind = "fry", key = key }
 		return true
+	elseif kind == "animal" and Config.Animals[key] and (data.animals[key] or 0) > 0 then
+		selected[player] = { kind = "animal", key = key }
+		return true
+	elseif kind == "feed" and Config.Feeds[key] and (data.feed[key] or 0) > 0 then
+		selected[player] = { kind = "feed", key = key }
+		return true
 	elseif kind == "gear" and Config.Gear[key] and Config.Gear[key].selectable and (data.gear[key] or 0) > 0 then
 		selected[player] = { kind = "gear", key = key }
 		return true
 	end
 	return false, "Không thể chọn vật phẩm này"
+end
+
+function Actions.BuyAnimal(player, data, key)
+	local a = Config.Animals[key]
+	if not a then
+		return false, "Con vật không tồn tại"
+	end
+	if data.coins < a.price then
+		return false, "Không đủ xu"
+	end
+	data.coins -= a.price
+	data.animals[key] = (data.animals[key] or 0) + 1
+	return true, "Đã mua " .. a.name .. "! Chọn ở thanh dưới rồi chạm vào chuồng để thả"
+end
+
+-- Chế tạo thức ăn: dùng nông sản / thủy sản (ưu tiên loại rẻ nhất, không đột biến)
+function Actions.Craft(player, data, feedKey, times)
+	local feed = Config.Feeds[feedKey]
+	if not feed then
+		return false, "Công thức không tồn tại"
+	end
+	local inputs = PetUtil.recipeInputs(feed)
+	local maxTimes = math.huge
+	for _, input in ipairs(inputs) do
+		maxTimes = math.min(maxTimes, math.floor(PetUtil.countBase(data.crops, input.key) / input.amount))
+	end
+	times = math.clamp(math.floor(tonumber(times) or 1), 1, 100)
+	times = math.min(times, maxTimes)
+	if times <= 0 then
+		return false, "Không đủ nguyên liệu"
+	end
+	for _, input in ipairs(inputs) do
+		local need = input.amount * times
+		local variants = {}
+		for key in pairs(data.crops) do
+			if string.match(key, "^([^|]+)") == input.key then
+				table.insert(variants, key)
+			end
+		end
+		table.sort(variants, function(a, b)
+			return PetUtil.cropValue(a) < PetUtil.cropValue(b)
+		end)
+		for _, key in ipairs(variants) do
+			local take = math.min(need, data.crops[key])
+			data.crops[key] -= take
+			if data.crops[key] <= 0 then
+				data.crops[key] = nil
+			end
+			need -= take
+			if need <= 0 then
+				break
+			end
+		end
+	end
+	local made = feed.output * times
+	data.feed[feedKey] = (data.feed[feedKey] or 0) + made
+	return true, "🍲 Chế tạo được " .. made .. " " .. feed.name
 end
 
 function Actions.BuyFry(player, data, key)

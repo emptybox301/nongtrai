@@ -162,7 +162,36 @@ end
 
 -- Nông sản / thủy sản dùng chung khóa "Loai|DotBien"
 function PetUtil.produceInfo(key)
-	return Config.Seeds[key] or Config.Fish[key], Config.Fish[key] ~= nil
+	return Config.Seeds[key] or Config.Fish[key] or Config.Products[key], Config.Fish[key] ~= nil
+end
+
+-- Đếm tổng số nông sản / thủy sản cùng loại (mọi đột biến)
+function PetUtil.countBase(crops, baseKey)
+	local n = 0
+	for key, amount in pairs(crops or {}) do
+		if string.match(key, "^([^|]+)") == baseKey then
+			n += amount
+		end
+	end
+	return n
+end
+
+-- Danh sách nguyên liệu của công thức theo thứ tự cố định
+function PetUtil.recipeInputs(feed)
+	local list = {}
+	for key, amount in pairs(feed.inputs) do
+		table.insert(list, { key = key, amount = amount })
+	end
+	table.sort(list, function(a, b)
+		return a.key < b.key
+	end)
+	return list
+end
+
+function PetUtil.feedFits(feedKey, animalKey)
+	local feed = Config.Feeds[feedKey]
+	local animal = Config.Animals[animalKey]
+	return feed ~= nil and animal ~= nil and (feed.any == true or animal.eats == feedKey)
 end
 
 function PetUtil.isFish(cropKey)

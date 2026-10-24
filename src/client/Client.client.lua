@@ -202,7 +202,7 @@ local sideBar = new("Frame", {
 	BackgroundTransparency = 1,
 	AnchorPoint = Vector2.new(1, 0.5),
 	Position = UDim2.new(1, -10, 0.42, 0),
-	Size = UDim2.fromOffset(64, 290),
+	Size = UDim2.fromOffset(58, 330),
 	Parent = gui,
 }, {
 	new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
@@ -472,6 +472,65 @@ local function cropColor(key)
 	return info and info.color or COLORS.gray
 end
 
+Renderers.AnimalShop = function()
+	local data = state.data
+	panelTitle.Text = "🐄 Cửa Hàng Gia Súc"
+	note("Gia súc mua 1 lần, nuôi mãi mãi. Thả vào chuồng sau nông trại, cho ăn thức ăn tự chế tạo để nhận sản phẩm.")
+	for _, key in ipairs(Config.AnimalOrder) do
+		local a = Config.Animals[key]
+		local product = Config.Products[a.product]
+		local sub = string.format(
+			"Giá %s xu • Ăn %s\nMỗi lần cho ăn: %d-%d %s (%s xu/cái) sau %s • Bạn có: %d",
+			fmt(a.price), Config.Feeds[a.eats].name, a.yield[1], a.yield[2], product.name, fmt(product.sell), PetUtil.formatTime(a.time), (data.animals or {})[key] or 0
+		)
+		row(a.name, sub, a.color, {
+			{ "Mua", COLORS.green, function() call("BuyAnimal", key) end, data.coins < a.price },
+		})
+	end
+end
+
+Renderers.Barn = function()
+	local data = state.data
+	panelTitle.Text = "🐄 Chuồng & Chế Tạo Thức Ăn"
+	header("Chuồng của bạn")
+	for i = 1, Config.PenCount do
+		local pen = (data.pens or {})["b" .. i]
+		if pen then
+			local a = Config.Animals[pen.animal]
+			local status
+			if pen.at == nil then
+				status = "🍽 Đói — chạm vào chuồng để cho ăn " .. Config.Feeds[a.eats].name
+			elseif os.time() - pen.at >= pen.time then
+				status = "✨ Có " .. Config.Products[a.product].name .. ", chạm vào chuồng để thu nhặt"
+			else
+				status = "⏳ Đang làm " .. Config.Products[a.product].name .. ": còn " .. PetUtil.formatTime(pen.time - (os.time() - pen.at))
+			end
+			row("Chuồng " .. i .. ": " .. a.name, status, a.color)
+		else
+			row("Chuồng " .. i .. ": trống", "Mua gia súc ở quầy 🐄 Gia Súc rồi thả vào đây", Color3.fromRGB(220, 205, 170))
+		end
+	end
+
+	header("🍲 Chế tạo thức ăn")
+	note("Dùng nông sản / thủy sản trong túi (ưu tiên loại thường, không đột biến).")
+	for _, feedKey in ipairs(Config.FeedOrder) do
+		local feed = Config.Feeds[feedKey]
+		local parts = {}
+		local maxTimes = math.huge
+		for _, input in ipairs(PetUtil.recipeInputs(feed)) do
+			local have = PetUtil.countBase(data.crops, input.key)
+			local info = PetUtil.produceInfo(input.key)
+			table.insert(parts, string.format("%d %s (%d)", input.amount, info and info.name or input.key, have))
+			maxTimes = math.min(maxTimes, math.floor(have / input.amount))
+		end
+		local sub = string.format("%s • Ra %d phần • Đang có: %d\nCần: %s", feed.desc, feed.output, (data.feed or {})[feedKey] or 0, table.concat(parts, ", "))
+		row(feed.name, sub, feed.color, {
+			{ "x1", COLORS.green, function() call("Craft", feedKey, 1) end, maxTimes < 1 },
+			{ "Tối đa", COLORS.blue, function() call("Craft", feedKey, 100) end, maxTimes < 2 },
+		})
+	end
+end
+
 Renderers.FishShop = function()
 	local data = state.data
 	panelTitle.Text = "🐟 Cửa Hàng Thủy Sản"
@@ -613,7 +672,27 @@ Renderers.Bag = function()
 		note("Chưa có con giống. Mua ở quầy 🐟 Thủy Sản!")
 	end
 
-	header("Nông sản & thủy sản")
+	header("Gia súc & thức ăn")
+	any = false
+	for _, key in ipairs(Config.AnimalOrder) do
+		local n = (data.animals or {})[key] or 0
+		if n > 0 then
+			any = true
+			row(Config.Animals[key].name .. " x" .. n, "Chọn ở thanh dưới rồi chạm vào chuồng trống", Config.Animals[key].color)
+		end
+	end
+	for _, key in ipairs(Config.FeedOrder) do
+		local n = (data.feed or {})[key] or 0
+		if n > 0 then
+			any = true
+			row(Config.Feeds[key].name .. " x" .. n, Config.Feeds[key].desc, Config.Feeds[key].color)
+		end
+	end
+	if not any then
+		note("Chưa có gia súc hay thức ăn.")
+	end
+
+	header("Nông sản, thủy sản & sản phẩm")
 	local keys = sortedCropKeys(data)
 	for _, key in ipairs(keys) do
 		row(PetUtil.cropName(key) .. " x" .. data.crops[key], "Giá gốc " .. fmt(PetUtil.cropValue(key)) .. " xu", cropColor(key))
@@ -782,7 +861,7 @@ local function sideButton(text, color, panelName, layout)
 		TextSize = 13,
 		TextWrapped = true,
 		BackgroundColor3 = color,
-		Size = UDim2.fromOffset(64, 64),
+		Size = UDim2.fromOffset(58, 58),
 		LayoutOrder = layout,
 		Parent = sideBar,
 	}, function()
@@ -791,6 +870,7 @@ local function sideButton(text, color, panelName, layout)
 end
 sideButton("🐾\nPet", COLORS.purple, "Pets", 1)
 sideButton("🎒\nTúi", COLORS.blue, "Bag", 2)
+sideButton("🐄\nChuồng", Color3.fromRGB(180, 70, 50), "Barn", 4)
 sideButton("🏛\nTriển lãm", COLORS.gold, "Exhibit", 3)
 
 ----------------------------------------------------------------
@@ -809,8 +889,8 @@ button({
 	TextSize = 12,
 	TextWrapped = true,
 	BackgroundColor3 = COLORS.green,
-	Size = UDim2.fromOffset(64, 64),
-	LayoutOrder = 4,
+	Size = UDim2.fromOffset(58, 58),
+	LayoutOrder = 5,
 	Parent = sideBar,
 }, function()
 	closePanel()
@@ -871,6 +951,16 @@ local function renderHotbar()
 			table.insert(items, { kind = "fry", key = key, name = Config.Fish[key].name, count = data.fry[key], color = Config.Fish[key].color })
 		end
 	end
+	for _, key in ipairs(Config.AnimalOrder) do
+		if ((data.animals or {})[key] or 0) > 0 then
+			table.insert(items, { kind = "animal", key = key, name = Config.Animals[key].name, count = data.animals[key], color = Config.Animals[key].color })
+		end
+	end
+	for _, key in ipairs(Config.FeedOrder) do
+		if ((data.feed or {})[key] or 0) > 0 then
+			table.insert(items, { kind = "feed", key = key, name = Config.Feeds[key].name, count = data.feed[key], color = Config.Feeds[key].color })
+		end
+	end
 	for _, key in ipairs(Config.GearOrder) do
 		local g = Config.Gear[key]
 		if g.selectable and (data.gear[key] or 0) > 0 then
@@ -912,9 +1002,15 @@ local function renderHotbar()
 		elseif sel.kind == "fry" then
 			name = Config.Fish[sel.key].name
 			hint.Text = "Đang cầm: " .. name .. " — chạm vào ao trống để thả"
+		elseif sel.kind == "animal" then
+			name = Config.Animals[sel.key].name
+			hint.Text = "Đang cầm: " .. name .. " — chạm vào chuồng trống để thả"
+		elseif sel.kind == "feed" then
+			name = Config.Feeds[sel.key].name
+			hint.Text = "Đang cầm: " .. name .. " — chạm vào chuồng có con vật đói"
 		else
 			name = Config.Gear[sel.key].name
-			hint.Text = "Đang cầm: " .. name .. " — chạm vào cây hoặc ao của bạn"
+			hint.Text = "Đang cầm: " .. name .. " — chạm vào cây, ao hoặc chuồng của bạn"
 		end
 	else
 		hint.Text = "Chọn hạt/con giống bên dưới rồi chạm ô đất/ao • Chạm khi chín để thu hoạch"

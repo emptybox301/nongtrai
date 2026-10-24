@@ -143,6 +143,14 @@ local STEPS = {
 		end,
 	},
 	{
+		title = "🐄 Chuồng gia súc",
+		text = "Phía sau ao là chuồng của bạn. Mua gà, vịt, cừu, bò ở quầy 🐄 Gia Súc rồi thả vào chuồng. Thức ăn cho chúng phải tự chế tạo ở 🍲 Bàn Chế Tạo cạnh chuồng, từ nông sản bạn trồng (vd. 3 Lúa Mì + 2 Cà Rốt = Thức Ăn Hạt cho gà).",
+		button = "Tiếp",
+		target = function()
+			return plotPart("Barn", "CraftBench")
+		end,
+	},
+	{
 		title = "🐾 Pet 5 hệ",
 		text = "Ở quầy 🐾 Cửa Hàng Pet có 5 pet theo Kim, Mộc, Thủy, Hỏa, Thổ. Mỗi hệ cho một buff riêng. Mua Mảnh Hợp Thể ở quầy 🛠 Dụng Cụ để hợp thể 2 pet thành pet mạnh hơn (nút 🐾 Pet bên phải).",
 		button = "Tiếp",

@@ -53,7 +53,7 @@ Config.Elements = {
 		color = Color3.fromRGB(190, 140, 70),
 		petName = "Chuột Đất",
 		buffBase = 0.05,
-		buffText = "cơ hội hoàn lại hạt giống",
+		buffText = "cơ hội hoàn lại hạt / con giống / thức ăn",
 	},
 }
 
@@ -113,6 +113,58 @@ Config.Fish = {
 }
 
 ----------------------------------------------------------------
+-- CHUỒNG GIA SÚC
+-- Gia súc mua 1 lần, nuôi mãi. Mỗi lần cho ăn = 1 lượt sản xuất.
+----------------------------------------------------------------
+Config.PenCount = 3
+Config.AnimalOrder = { "Ga", "Vit", "Cuu", "Bo" }
+
+Config.Animals = {
+	Ga = { name = "Gà", price = 500, product = "TrungGa", time = 90, yield = { 2, 3 }, eats = "ThucAnHat", color = Color3.fromRGB(250, 250, 245), shape = "bird" },
+	Vit = { name = "Vịt", price = 1500, product = "TrungVit", time = 150, yield = { 2, 3 }, eats = "ThucAnHat", color = Color3.fromRGB(250, 220, 90), shape = "bird" },
+	Cuu = { name = "Cừu", price = 4500, product = "LongCuu", time = 300, yield = { 1, 3 }, eats = "CoKhoTron", color = Color3.fromRGB(240, 240, 235), shape = "sheep" },
+	Bo = { name = "Bò", price = 12000, product = "SuaBo", time = 420, yield = { 1, 2 }, eats = "CoKhoTron", color = Color3.fromRGB(245, 245, 245), shape = "cow" },
+}
+
+-- Sản phẩm gia súc (bán ở quầy Bán Hàng như nông sản)
+Config.ProductOrder = { "TrungGa", "TrungVit", "LongCuu", "SuaBo" }
+Config.Products = {
+	TrungGa = { name = "Trứng Gà", sell = 90, color = Color3.fromRGB(245, 225, 190) },
+	TrungVit = { name = "Trứng Vịt", sell = 200, color = Color3.fromRGB(200, 230, 225) },
+	LongCuu = { name = "Lông Cừu", sell = 900, color = Color3.fromRGB(250, 250, 250) },
+	SuaBo = { name = "Sữa Bò", sell = 2600, color = Color3.fromRGB(255, 255, 255) },
+}
+
+-- THỨC ĂN TỰ CHẾ TẠO tại Bàn Chế Tạo trong chuồng.
+-- inputs: { [mã nông sản / thủy sản] = số lượng } (đột biến nào cũng dùng được, ưu tiên loại thường)
+Config.FeedOrder = { "ThucAnHat", "CoKhoTron", "ThucAnCaoCap" }
+Config.Feeds = {
+	ThucAnHat = {
+		name = "Thức Ăn Hạt",
+		desc = "Cho Gà, Vịt",
+		inputs = { LuaMi = 3, CaRot = 2 },
+		output = 2,
+		color = Color3.fromRGB(220, 190, 110),
+	},
+	CoKhoTron = {
+		name = "Cỏ Khô Trộn",
+		desc = "Cho Cừu, Bò",
+		inputs = { LuaMi = 3, Bap = 2 },
+		output = 2,
+		color = Color3.fromRGB(170, 190, 80),
+	},
+	ThucAnCaoCap = {
+		name = "Thức Ăn Cao Cấp",
+		desc = "Cho mọi con vật, sản phẩm x2",
+		inputs = { BiNgo = 1, CaChua = 2, CaRoPhi = 2 },
+		output = 1,
+		any = true,
+		mult = 2,
+		color = Color3.fromRGB(230, 120, 200),
+	},
+}
+
+----------------------------------------------------------------
 -- CỬA HÀNG DỤNG CỤ (GEAR)
 ----------------------------------------------------------------
 Config.GearOrder = { "ManhHopThe", "BinhTuoi", "PhanBon", "Xeng", "ThucAnCa", "BuaMayMan" }
@@ -121,7 +173,7 @@ Config.Gear = {
 	ManhHopThe = { name = "Mảnh Hợp Thể", price = 300, desc = "Nguyên liệu để hợp thể 2 pet", selectable = false, color = Color3.fromRGB(170, 100, 255) },
 	BinhTuoi = { name = "Bình Tưới", price = 50, desc = "Chạm vào cây: giảm 25% thời gian còn lại", selectable = true, color = Color3.fromRGB(80, 170, 255) },
 	PhanBon = { name = "Phân Bón", price = 150, desc = "Chạm vào cây: thu hoạch x2 sản lượng", selectable = true, color = Color3.fromRGB(130, 90, 50) },
-	Xeng = { name = "Xẻng", price = 100, desc = "Dùng mãi mãi. Chạm vào cây để nhổ bỏ, chạm vào ao để xả ao", selectable = true, reusable = true, color = Color3.fromRGB(150, 150, 160) },
+	Xeng = { name = "Xẻng", price = 100, desc = "Dùng mãi mãi. Chạm cây để nhổ, chạm ao để xả ao, chạm chuồng để đưa con vật về túi", selectable = true, reusable = true, color = Color3.fromRGB(150, 150, 160) },
 	ThucAnCa = { name = "Thức Ăn Cá", price = 80, desc = "Chạm vào ao: giảm 30% thời gian, +1 con khi thu hoạch", selectable = true, color = Color3.fromRGB(220, 180, 110) },
 	BuaMayMan = { name = "Bùa May Mắn", price = 800, desc = "Dùng trong Túi: x2 may mắn đột biến trong 10 phút", selectable = false, color = Color3.fromRGB(80, 220, 120) },
 }

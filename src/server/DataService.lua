@@ -32,6 +32,9 @@ local function defaultData()
 		plots = {},
 		fry = { CaRoPhi = 1 }, -- con giống thủy sản
 		ponds = {}, -- trạng thái ao nuôi
+		animals = {}, -- gia súc chưa thả vào chuồng
+		pens = {}, -- trạng thái chuồng
+		feed = {}, -- thức ăn gia súc đã chế tạo
 		likes = 0,
 		nextPetId = 1,
 		luckUntil = 0,

@@ -158,10 +158,80 @@ function Visuals.makeFish(fishKey, mutKey, scale)
 	return model
 end
 
--- Nông sản (dùng cho cây trên ruộng và vật trưng bày). Tự chuyển sang mô hình cá nếu là thủy sản.
+-- Gia súc: gà / vịt / cừu / bò dựng bằng Part
+function Visuals.makeAnimal(animalKey)
+	local a = Config.Animals[animalKey]
+	local model = Instance.new("Model")
+	model.Name = "Animal"
+	local body
+	local dark = Color3.fromRGB(60, 45, 35)
+	if a.shape == "bird" then
+		body = ovalPart({ Name = "Body", Size = Vector3.new(1.6, 1.5, 2), Color = a.color, CFrame = CFrame.new(), Parent = model })
+		part({ Name = "Head", Shape = Enum.PartType.Ball, Size = Vector3.one * 0.9, Color = a.color, CFrame = CFrame.new(0, 0.9, -0.8), Parent = model })
+		part({ Name = "Beak", Size = Vector3.new(0.35, 0.2, 0.45), Color = Color3.fromRGB(255, 160, 40), CFrame = CFrame.new(0, 0.85, -1.35), Parent = model })
+		if animalKey == "Ga" then
+			part({ Name = "Comb", Size = Vector3.new(0.15, 0.4, 0.5), Color = Color3.fromRGB(220, 40, 40), CFrame = CFrame.new(0, 1.45, -0.8), Parent = model })
+		end
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "Leg", Size = Vector3.new(0.15, 0.7, 0.15), Color = Color3.fromRGB(255, 160, 40), CFrame = CFrame.new(side * 0.35, -0.95, 0), Parent = model })
+		end
+	else
+		local isSheep = a.shape == "sheep"
+		local bodySize = isSheep and Vector3.new(2.4, 2, 3.2) or Vector3.new(2.6, 2.2, 4.2)
+		if isSheep then
+			body = ovalPart({ Name = "Body", Size = bodySize, Color = a.color, Material = Enum.Material.Fabric, CFrame = CFrame.new(), Parent = model })
+		else
+			body = part({ Name = "Body", Size = bodySize, Color = a.color, CFrame = CFrame.new(), Parent = model })
+			for _, sp in ipairs({ Vector3.new(0.5, 0.4, 0.6), Vector3.new(-0.6, -0.1, -0.9), Vector3.new(0.2, 0.3, -1.4) }) do
+				part({ Name = "Spot", Size = Vector3.new(bodySize.X + 0.05, 0.9, 1), Color = Color3.fromRGB(35, 30, 30), CFrame = CFrame.new(0, sp.Y, sp.Z), Parent = model })
+			end
+		end
+		local headColor = isSheep and dark or a.color
+		part({ Name = "Head", Size = Vector3.new(1.3, 1.3, 1.4), Color = headColor, CFrame = CFrame.new(0, bodySize.Y * 0.35, -bodySize.Z / 2 - 0.5), Parent = model })
+		if not isSheep then
+			part({ Name = "Nose", Size = Vector3.new(1.1, 0.6, 0.3), Color = Color3.fromRGB(240, 170, 170), CFrame = CFrame.new(0, bodySize.Y * 0.2, -bodySize.Z / 2 - 1.3), Parent = model })
+			for _, side in ipairs({ -1, 1 }) do
+				part({ Name = "Horn", Size = Vector3.new(0.2, 0.6, 0.2), Color = Color3.fromRGB(230, 220, 190), CFrame = CFrame.new(side * 0.45, bodySize.Y * 0.35 + 0.9, -bodySize.Z / 2 - 0.4), Parent = model })
+			end
+		end
+		for _, sx in ipairs({ -1, 1 }) do
+			for _, sz in ipairs({ -1, 1 }) do
+				part({ Name = "Leg", Size = Vector3.new(0.45, 1.4, 0.45), Color = isSheep and dark or a.color, CFrame = CFrame.new(sx * bodySize.X * 0.3, -bodySize.Y / 2 - 0.5, sz * bodySize.Z * 0.32), Parent = model })
+			end
+		end
+	end
+	Visuals.billboard(body, a.name, Color3.new(1, 1, 1), 2.2)
+	model.PrimaryPart = body
+	return model
+end
+
+-- Sản phẩm gia súc (trứng, lông, sữa) cho nhà triển lãm
+function Visuals.makeProduct(productKey, mutKey, scale)
+	local info = Config.Products[productKey]
+	local color, material, sizeMult = mutationLook(info.color, mutKey)
+	local s = scale * sizeMult
+	local model = Instance.new("Model")
+	model.Name = "Product"
+	local body
+	if productKey == "SuaBo" then
+		body = part({ Name = "Bottle", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.8, 1, 1) * s, Color = color, Material = material, CFrame = CFrame.Angles(0, 0, math.rad(90)), Parent = model })
+		part({ Name = "Cap", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.3, 0.6, 0.6) * s, Color = Color3.fromRGB(60, 120, 220), CFrame = CFrame.new(0, 1.05 * s, 0) * CFrame.Angles(0, 0, math.rad(90)), Parent = model })
+	elseif productKey == "LongCuu" then
+		body = ovalPart({ Name = "Wool", Size = Vector3.new(1.8, 1.2, 1.6) * s, Color = color, Material = Enum.Material.Fabric, CFrame = CFrame.new(), Parent = model })
+	else
+		body = ovalPart({ Name = "Egg", Size = Vector3.new(0.9, 1.2, 0.9) * s, Color = color, Material = material, CFrame = CFrame.new(), Parent = model })
+	end
+	model.PrimaryPart = body
+	return model
+end
+
+-- Nông sản (dùng cho cây trên ruộng và vật trưng bày). Tự chuyển sang mô hình cá / sản phẩm gia súc.
 function Visuals.makeCrop(seedKey, mutKey, scale)
 	if Config.Fish[seedKey] then
 		return Visuals.makeFish(seedKey, mutKey, scale)
+	end
+	if Config.Products[seedKey] then
+		return Visuals.makeProduct(seedKey, mutKey, scale)
 	end
 	local seed = Config.Seeds[seedKey]
 	local model = Instance.new("Model")
