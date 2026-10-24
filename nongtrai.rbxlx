@@ -1,0 +1,3509 @@
+<roblox version="4">
+  <Item class="Players" referent="0">
+    <Properties>
+      <string name="Name">Players</string>
+      <bool name="CharacterAutoLoads">true</bool>
+      <int name="MaxPlayersInternal">5</int>
+    </Properties>
+  </Item>
+  <Item class="ReplicatedStorage" referent="1">
+    <Properties>
+      <string name="Name">ReplicatedStorage</string>
+    </Properties>
+    <Item class="Folder" referent="2">
+      <Properties>
+        <string name="Name">Shared</string>
+      </Properties>
+      <Item class="ModuleScript" referent="3">
+        <Properties>
+          <string name="Name">Config</string>
+          <string name="Source"><![CDATA[-- Cấu hình toàn bộ game Nông Trại Ngũ Hành
+-- Sửa số liệu ở đây để cân bằng game.
+
+local Config = {}
+
+Config.StartCoins = 100
+Config.RestockSeconds = 300 -- cửa hàng hạt giống làm mới mỗi 5 phút
+Config.MaxEquippedPets = 3
+Config.MaxPlayers = 5 -- mỗi server tối đa 5 người (5 nông trại)
+Config.ExhibitSlots = 3 -- số bục của mỗi người trong Nhà Triển Lãm chung
+Config.MaxPetTier = 5
+Config.LikeCooldown = 300 -- giây, mỗi người chỉ thích 1 triển lãm 1 lần / 5 phút
+Config.ExhibitIncomeInterval = 60 -- giây
+Config.DataStoreName = "NongTraiNguHanh_v1"
+Config.TutorialReward = 200 -- xu thưởng khi hoàn thành hướng dẫn
+
+----------------------------------------------------------------
+-- NGŨ HÀNH
+----------------------------------------------------------------
+Config.ElementOrder = { "Kim", "Moc", "Thuy", "Hoa", "Tho" }
+
+Config.Elements = {
+	Kim = {
+		name = "Kim",
+		color = Color3.fromRGB(225, 225, 235),
+		petName = "Hổ Kim",
+		buffBase = 0.05,
+		buffText = "giá bán nông sản",
+	},
+	Moc = {
+		name = "Mộc",
+		color = Color3.fromRGB(70, 185, 75),
+		petName = "Thỏ Lá",
+		buffBase = 0.06,
+		buffText = "tốc độ lớn của cây",
+	},
+	Thuy = {
+		name = "Thủy",
+		color = Color3.fromRGB(60, 135, 235),
+		petName = "Rùa Nước",
+		buffBase = 0.04,
+		buffText = "cơ hội thu hoạch x2 & thủy sản lớn nhanh",
+	},
+	Hoa = {
+		name = "Hỏa",
+		color = Color3.fromRGB(235, 85, 45),
+		petName = "Cáo Lửa",
+		buffBase = 0.10,
+		buffText = "may mắn ra nông sản đột biến",
+	},
+	Tho = {
+		name = "Thổ",
+		color = Color3.fromRGB(190, 140, 70),
+		petName = "Chuột Đất",
+		buffBase = 0.05,
+		buffText = "cơ hội hoàn lại hạt giống",
+	},
+}
+
+-- Tương sinh: A sinh B
+Config.Sinh = { Moc = "Hoa", Hoa = "Tho", Tho = "Kim", Kim = "Thuy", Thuy = "Moc" }
+-- Tương khắc: A khắc B
+Config.Khac = { Moc = "Tho", Tho = "Thuy", Thuy = "Hoa", Hoa = "Kim", Kim = "Moc" }
+
+Config.SynergyBonus = 0.25 -- pet hợp thể tương sinh mạnh thêm 25%
+Config.KhacSuccessChance = 0.7 -- hợp thể tương khắc chỉ thành công 70%
+Config.BuffCaps = { Thuy = 1.0, Tho = 0.9 }
+
+Config.Tiers = {
+	{ name = "Thường", mult = 1, color = Color3.fromRGB(200, 200, 200), exhibitValue = 5 },
+	{ name = "Hiếm", mult = 2.2, color = Color3.fromRGB(80, 170, 255), exhibitValue = 15 },
+	{ name = "Sử Thi", mult = 4, color = Color3.fromRGB(180, 90, 255), exhibitValue = 40 },
+	{ name = "Huyền Thoại", mult = 6.5, color = Color3.fromRGB(255, 180, 40), exhibitValue = 100 },
+	{ name = "Thần Thoại", mult = 10, color = Color3.fromRGB(255, 70, 110), exhibitValue = 250 },
+}
+
+----------------------------------------------------------------
+-- HẠT GIỐNG
+----------------------------------------------------------------
+Config.SeedOrder = { "CaRot", "LuaMi", "CaChua", "Bap", "DuaHau", "BiNgo", "ThanhLong", "SenVang" }
+
+Config.Seeds = {
+	CaRot = { name = "Cà Rốt", price = 10, grow = 20, sell = 18, color = Color3.fromRGB(255, 140, 30), appear = 1.0, stock = { 10, 20 } },
+	LuaMi = { name = "Lúa Mì", price = 25, grow = 40, sell = 45, color = Color3.fromRGB(235, 205, 90), appear = 1.0, stock = { 8, 15 } },
+	CaChua = { name = "Cà Chua", price = 60, grow = 60, sell = 110, color = Color3.fromRGB(230, 50, 50), appear = 0.9, stock = { 5, 12 } },
+	Bap = { name = "Bắp", price = 150, grow = 90, sell = 280, color = Color3.fromRGB(255, 220, 60), appear = 0.8, stock = { 4, 10 } },
+	DuaHau = { name = "Dưa Hấu", price = 400, grow = 150, sell = 750, color = Color3.fromRGB(60, 160, 60), appear = 0.6, stock = { 3, 6 } },
+	BiNgo = { name = "Bí Ngô", price = 1000, grow = 240, sell = 1900, color = Color3.fromRGB(240, 120, 20), appear = 0.45, stock = { 2, 5 } },
+	ThanhLong = { name = "Thanh Long", price = 2500, grow = 360, sell = 4800, color = Color3.fromRGB(235, 60, 140), appear = 0.3, stock = { 1, 3 } },
+	SenVang = { name = "Sen Vàng", price = 8000, grow = 600, sell = 16000, color = Color3.fromRGB(255, 200, 40), appear = 0.15, stock = { 1, 2 } },
+}
+
+-- Đột biến nông sản (xét theo thứ tự, hiếm nhất trước)
+Config.Mutations = {
+	{ key = "CauVong", name = "Cầu Vồng", chance = 0.003, mult = 15, color = Color3.fromRGB(200, 90, 255) },
+	{ key = "Vang", name = "Vàng", chance = 0.015, mult = 5, color = Color3.fromRGB(255, 215, 0) },
+	{ key = "KhongLo", name = "Khổng Lồ", chance = 0.06, mult = 2 },
+}
+
+----------------------------------------------------------------
+-- THỦY SẢN (con giống thả vào ao, mỗi ao cho nhiều con khi thu hoạch)
+----------------------------------------------------------------
+Config.PondCount = 4
+Config.FishOrder = { "CaRoPhi", "TomCang", "CaChep", "Cua", "CaKoi", "CaRongVang" }
+
+Config.Fish = {
+	CaRoPhi = { name = "Cá Rô Phi", price = 40, grow = 60, sell = 25, yield = { 2, 4 }, color = Color3.fromRGB(150, 160, 170), appear = 1.0, stock = { 6, 12 }, shape = "fish" },
+	TomCang = { name = "Tôm Càng", price = 120, grow = 120, sell = 60, yield = { 3, 5 }, color = Color3.fromRGB(240, 120, 90), appear = 0.9, stock = { 4, 8 }, shape = "shrimp" },
+	CaChep = { name = "Cá Chép", price = 350, grow = 200, sell = 220, yield = { 2, 3 }, color = Color3.fromRGB(230, 170, 60), appear = 0.75, stock = { 3, 6 }, shape = "fish" },
+	Cua = { name = "Cua", price = 900, grow = 300, sell = 420, yield = { 2, 4 }, color = Color3.fromRGB(200, 70, 50), appear = 0.55, stock = { 2, 4 }, shape = "crab" },
+	CaKoi = { name = "Cá Koi", price = 3000, grow = 480, sell = 2600, yield = { 1, 3 }, color = Color3.fromRGB(250, 250, 250), appear = 0.3, stock = { 1, 3 }, shape = "fish" },
+	CaRongVang = { name = "Cá Rồng Vàng", price = 10000, grow = 720, sell = 9000, yield = { 1, 2 }, color = Color3.fromRGB(255, 190, 40), appear = 0.12, stock = { 1, 1 }, shape = "fish" },
+}
+
+----------------------------------------------------------------
+-- CỬA HÀNG DỤNG CỤ (GEAR)
+----------------------------------------------------------------
+Config.GearOrder = { "ManhHopThe", "BinhTuoi", "PhanBon", "Xeng", "ThucAnCa", "BuaMayMan" }
+
+Config.Gear = {
+	ManhHopThe = { name = "Mảnh Hợp Thể", price = 300, desc = "Nguyên liệu để hợp thể 2 pet", selectable = false, color = Color3.fromRGB(170, 100, 255) },
+	BinhTuoi = { name = "Bình Tưới", price = 50, desc = "Chạm vào cây: giảm 25% thời gian còn lại", selectable = true, color = Color3.fromRGB(80, 170, 255) },
+	PhanBon = { name = "Phân Bón", price = 150, desc = "Chạm vào cây: thu hoạch x2 sản lượng", selectable = true, color = Color3.fromRGB(130, 90, 50) },
+	Xeng = { name = "Xẻng", price = 100, desc = "Dùng mãi mãi. Chạm vào cây để nhổ bỏ, chạm vào ao để xả ao", selectable = true, reusable = true, color = Color3.fromRGB(150, 150, 160) },
+	ThucAnCa = { name = "Thức Ăn Cá", price = 80, desc = "Chạm vào ao: giảm 30% thời gian, +1 con khi thu hoạch", selectable = true, color = Color3.fromRGB(220, 180, 110) },
+	BuaMayMan = { name = "Bùa May Mắn", price = 800, desc = "Dùng trong Túi: x2 may mắn đột biến trong 10 phút", selectable = false, color = Color3.fromRGB(80, 220, 120) },
+}
+Config.LuckCharmSeconds = 600
+
+----------------------------------------------------------------
+-- CỬA HÀNG PET
+----------------------------------------------------------------
+Config.BasicPetPrice = 1500
+
+return Config
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="4">
+        <Properties>
+          <string name="Name">PetUtil</string>
+          <string name="Source"><![CDATA[-- Hàm dùng chung cho pet ngũ hành (server và client đều dùng)
+local Config = require(script.Parent.Config)
+
+local PetUtil = {}
+
+local orderIndex = {}
+for i, e in ipairs(Config.ElementOrder) do
+	orderIndex[e] = i
+end
+
+function PetUtil.sortElements(list)
+	local seen, out = {}, {}
+	for _, e in ipairs(list) do
+		if Config.Elements[e] and not seen[e] then
+			seen[e] = true
+			table.insert(out, e)
+		end
+	end
+	table.sort(out, function(a, b)
+		return orderIndex[a] < orderIndex[b]
+	end)
+	return out
+end
+
+function PetUtil.sameElements(a, b)
+	if #a ~= #b then
+		return false
+	end
+	for i = 1, #a do
+		if a[i] ~= b[i] then
+			return false
+		end
+	end
+	return true
+end
+
+function PetUtil.elementText(els)
+	local names = {}
+	for _, e in ipairs(els) do
+		table.insert(names, Config.Elements[e].name)
+	end
+	return table.concat(names, " - ")
+end
+
+function PetUtil.petName(pet)
+	local els = pet.els
+	if #els == 5 then
+		return "Ngũ Hành Thần Thú"
+	elseif #els == 1 then
+		return Config.Elements[els[1]].petName
+	end
+	return "Linh Thú " .. PetUtil.elementText(els)
+end
+
+function PetUtil.tierInfo(tier)
+	return Config.Tiers[math.clamp(tier, 1, #Config.Tiers)]
+end
+
+-- Buff của 1 pet: { Kim = 0.05, Moc = ..., } (số thập phân, 0.1 = 10%)
+function PetUtil.getBuffs(pet)
+	local buffs = {}
+	local n = #pet.els
+	local damp = 1 - 0.1 * (n - 1)
+	local mult = PetUtil.tierInfo(pet.tier).mult * damp
+	if pet.syn then
+		mult *= (1 + Config.SynergyBonus)
+	end
+	for _, e in ipairs(pet.els) do
+		buffs[e] = Config.Elements[e].buffBase * mult
+	end
+	return buffs
+end
+
+-- Tổng buff của các pet đang trang bị
+function PetUtil.totalBuffs(data)
+	local total = { Kim = 0, Moc = 0, Thuy = 0, Hoa = 0, Tho = 0 }
+	if not data then
+		return total
+	end
+	for _, id in ipairs(data.equipped or {}) do
+		local pet = data.pets[id]
+		if pet then
+			for e, v in pairs(PetUtil.getBuffs(pet)) do
+				total[e] += v
+			end
+		end
+	end
+	for e, cap in pairs(Config.BuffCaps) do
+		total[e] = math.min(total[e], cap)
+	end
+	return total
+end
+
+function PetUtil.buffLines(buffs)
+	local lines = {}
+	for _, e in ipairs(Config.ElementOrder) do
+		local v = buffs[e]
+		if v and v > 0 then
+			table.insert(lines, string.format("%s: +%d%% %s", Config.Elements[e].name, math.floor(v * 100 + 0.5), Config.Elements[e].buffText))
+		end
+	end
+	return lines
+end
+
+-- Quan hệ ngũ hành giữa 2 nhóm hệ
+function PetUtil.relation(elsA, elsB)
+	local sinh, khac = false, false
+	for _, a in ipairs(elsA) do
+		for _, b in ipairs(elsB) do
+			if a ~= b then
+				if Config.Sinh[a] == b or Config.Sinh[b] == a then
+					sinh = true
+				end
+				if Config.Khac[a] == b or Config.Khac[b] == a then
+					khac = true
+				end
+			end
+		end
+	end
+	return sinh, khac
+end
+
+-- Xem trước kết quả hợp thể. Trả về nil, lý do nếu không được.
+function PetUtil.previewFusion(a, b)
+	if not a or not b then
+		return nil, "Chọn đủ 2 pet"
+	end
+	local merged = {}
+	for _, e in ipairs(a.els) do
+		table.insert(merged, e)
+	end
+	for _, e in ipairs(b.els) do
+		table.insert(merged, e)
+	end
+	local els = PetUtil.sortElements(merged)
+	local tier
+	if PetUtil.sameElements(a.els, b.els) then
+		tier = math.max(a.tier, b.tier) + 1
+		if tier > Config.MaxPetTier then
+			return nil, "Pet đã đạt bậc tối đa"
+		end
+	else
+		tier = math.max(a.tier, b.tier)
+	end
+	local sinh, khac = PetUtil.relation(a.els, b.els)
+	local syn = sinh or (a.syn == true and b.syn == true)
+	local result = {
+		els = els,
+		tier = tier,
+		syn = syn,
+		shardCost = tier + (#els - 1),
+		chance = khac and Config.KhacSuccessChance or 1,
+		sinh = sinh,
+		khac = khac,
+	}
+	return result
+end
+
+function PetUtil.petExhibitValue(pet)
+	return PetUtil.tierInfo(pet.tier).exhibitValue * #pet.els
+end
+
+-- Nông sản / thủy sản dùng chung khóa "Loai|DotBien"
+function PetUtil.produceInfo(key)
+	return Config.Seeds[key] or Config.Fish[key], Config.Fish[key] ~= nil
+end
+
+function PetUtil.isFish(cropKey)
+	local base = string.match(cropKey, "^([^|]+)")
+	return base ~= nil and Config.Fish[base] ~= nil
+end
+
+function PetUtil.cropValue(cropKey)
+	local baseKey, mutKey = string.match(cropKey, "^([^|]+)|(.+)$")
+	local info = PetUtil.produceInfo(baseKey or "")
+	if not info then
+		return 0
+	end
+	local mult = 1
+	for _, m in ipairs(Config.Mutations) do
+		if m.key == mutKey then
+			mult = m.mult
+		end
+	end
+	return info.sell * mult
+end
+
+function PetUtil.cropName(cropKey)
+	local baseKey, mutKey = string.match(cropKey, "^([^|]+)|(.+)$")
+	local info = PetUtil.produceInfo(baseKey or "")
+	if not info then
+		return cropKey
+	end
+	for _, m in ipairs(Config.Mutations) do
+		if m.key == mutKey then
+			return info.name .. " (" .. m.name .. ")"
+		end
+	end
+	return info.name
+end
+
+function PetUtil.cropExhibitValue(cropKey)
+	return math.floor(PetUtil.cropValue(cropKey) / 40) + 1
+end
+
+function PetUtil.formatNumber(n)
+	n = math.floor(n)
+	local s = tostring(math.abs(n))
+	local out = s:reverse():gsub("(%d%d%d)", "%1."):reverse()
+	if out:sub(1, 1) == "." then
+		out = out:sub(2)
+	end
+	return (n < 0 and "-" or "") .. out
+end
+
+function PetUtil.formatTime(sec)
+	sec = math.max(0, math.floor(sec))
+	local m = math.floor(sec / 60)
+	local s = sec % 60
+	return string.format("%d:%02d", m, s)
+end
+
+return PetUtil
+]]></string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="ServerScriptService" referent="5">
+    <Properties>
+      <string name="Name">ServerScriptService</string>
+    </Properties>
+    <Item class="Folder" referent="6">
+      <Properties>
+        <string name="Name">Server</string>
+      </Properties>
+      <Item class="ModuleScript" referent="7">
+        <Properties>
+          <string name="Name">DataService</string>
+          <string name="Source"><![CDATA[-- Lưu / tải dữ liệu người chơi bằng DataStore
+local DataStoreService = game:GetService("DataStoreService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage.Shared.Config)
+
+local DataService = {}
+local profiles = {} -- [player] = data
+local canSave = {} -- [player] = bool
+
+local store
+do
+	local ok, result = pcall(function()
+		return DataStoreService:GetDataStore(Config.DataStoreName)
+	end)
+	if ok then
+		store = result
+	else
+		warn("[DataService] Không mở được DataStore:", result)
+	end
+end
+
+local function defaultData()
+	return {
+		coins = Config.StartCoins,
+		seeds = { CaRot = 3 },
+		gear = {},
+		crops = {},
+		pets = {},
+		equipped = {},
+		exhibit = {},
+		plots = {},
+		fry = { CaRoPhi = 1 }, -- con giống thủy sản
+		ponds = {}, -- trạng thái ao nuôi
+		likes = 0,
+		nextPetId = 1,
+		luckUntil = 0,
+		tutorial = 1, -- bước hướng dẫn đang làm (0 = đã xong)
+		tutorialRewarded = false,
+	}
+end
+
+local function reconcile(data)
+	local def = defaultData()
+	for k, v in pairs(def) do
+		if data[k] == nil then
+			data[k] = v
+		end
+	end
+	return data
+end
+
+function DataService.load(player)
+	local data, ok = nil, false
+	if store then
+		for _ = 1, 3 do
+			local success, result = pcall(function()
+				return store:GetAsync("Player_" .. player.UserId)
+			end)
+			if success then
+				ok = true
+				data = result
+				break
+			end
+			task.wait(1)
+		end
+	end
+	if type(data) ~= "table" then
+		data = defaultData()
+	end
+	profiles[player] = reconcile(data)
+	canSave[player] = ok
+	return profiles[player], ok
+end
+
+function DataService.get(player)
+	return profiles[player]
+end
+
+function DataService.save(player)
+	local data = profiles[player]
+	if not data or not canSave[player] or not store then
+		return
+	end
+	local success, err = pcall(function()
+		store:SetAsync("Player_" .. player.UserId, data)
+	end)
+	if not success then
+		warn("[DataService] Lưu thất bại cho", player.Name, err)
+	end
+end
+
+function DataService.release(player)
+	DataService.save(player)
+	profiles[player] = nil
+	canSave[player] = nil
+end
+
+function DataService.all()
+	return profiles
+end
+
+-- tự lưu mỗi 2 phút
+task.spawn(function()
+	while true do
+		task.wait(120)
+		for player in pairs(profiles) do
+			task.spawn(DataService.save, player)
+		end
+	end
+end)
+
+game:BindToClose(function()
+	for player in pairs(profiles) do
+		DataService.save(player)
+	end
+end)
+
+return DataService
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="Script" referent="8">
+        <Properties>
+          <string name="Name">Main</string>
+          <token name="RunContext">0</token>
+          <string name="Source"><![CDATA[-- NÔNG TRẠI NGŨ HÀNH - Server chính
+-- Nông trại, cửa hàng, pet ngũ hành, hợp thể, nhà triển lãm
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local PetUtil = require(Shared.PetUtil)
+local DataService = require(script.Parent.DataService)
+local WorldBuilder = require(script.Parent.WorldBuilder)
+local Visuals = require(script.Parent.Visuals)
+
+----------------------------------------------------------------
+-- REMOTES
+----------------------------------------------------------------
+local remotes = Instance.new("Folder")
+remotes.Name = "Remotes"
+local DataEvent = Instance.new("RemoteEvent")
+DataEvent.Name = "Data"
+DataEvent.Parent = remotes
+local NotifyEvent = Instance.new("RemoteEvent")
+NotifyEvent.Name = "Notify"
+NotifyEvent.Parent = remotes
+local Request = Instance.new("RemoteFunction")
+Request.Name = "Request"
+Request.Parent = remotes
+remotes.Parent = ReplicatedStorage
+
+----------------------------------------------------------------
+-- TRẠNG THÁI
+----------------------------------------------------------------
+local plots, sections = WorldBuilder.build()
+local petFolder = Instance.new("Folder")
+petFolder.Name = "Pets"
+petFolder.Parent = workspace
+
+local playerPlot = {} -- [player] = plot
+local selected = {} -- [player] = { kind, key }
+local bought = {} -- [player] = { [seedKey/fishKey] = n }
+local waveStock = {}
+local restockAt = 0
+local petModels = {} -- [player] = { model, ... }
+local exhibitModels = {} -- [sectionIndex] = { model, ... }
+local likeCooldown = {} -- ["liker:owner"] = os.time()
+
+local function notify(player, text, kind)
+	NotifyEvent:FireClient(player, text, kind or "info")
+end
+
+local function stockFor(player)
+	local out = {}
+	local b = bought[player] or {}
+	for key, n in pairs(waveStock) do
+		out[key] = math.max(0, n - (b[key] or 0))
+	end
+	return out
+end
+
+local function push(player)
+	local data = DataService.get(player)
+	if not data then
+		return
+	end
+	local plot = playerPlot[player]
+	DataEvent:FireClient(player, {
+		data = data,
+		stock = stockFor(player),
+		restockAt = restockAt,
+		selected = selected[player],
+		plotIndex = plot and plot.index or nil,
+	})
+end
+
+local function buffsOf(data)
+	return PetUtil.totalBuffs(data)
+end
+
+----------------------------------------------------------------
+-- CỬA HÀNG HẠT GIỐNG: LÀM MỚI
+----------------------------------------------------------------
+local function restock()
+	for _, key in ipairs(Config.SeedOrder) do
+		local s = Config.Seeds[key]
+		if math.random() <= s.appear then
+			waveStock[key] = math.random(s.stock[1], s.stock[2])
+		else
+			waveStock[key] = 0
+		end
+	end
+	for _, key in ipairs(Config.FishOrder) do
+		local f = Config.Fish[key]
+		if math.random() <= f.appear then
+			waveStock[key] = math.random(f.stock[1], f.stock[2])
+		else
+			waveStock[key] = 0
+		end
+	end
+	waveStock.CaRot = math.max(waveStock.CaRot, 5)
+	waveStock.CaRoPhi = math.max(waveStock.CaRoPhi, 3)
+	bought = {}
+	restockAt = os.time() + Config.RestockSeconds
+	for _, p in ipairs(Players:GetPlayers()) do
+		push(p)
+		notify(p, "🌱🐟 Cửa hàng hạt giống & thủy sản vừa nhập hàng mới!", "info")
+	end
+end
+
+----------------------------------------------------------------
+-- NÔNG TRẠI
+----------------------------------------------------------------
+local function tileKey(idx)
+	return "t" .. idx
+end
+
+local function progressOf(plant)
+	return math.clamp((os.time() - plant.at) / plant.grow, 0, 1)
+end
+
+local function updateTileVisual(plot, idx, plant)
+	local tile = plot.tiles[idx]
+	if not tile.label then
+		tile.label = Visuals.billboard(tile.soil, "", Color3.new(1, 1, 1), 4)
+		tile.label.Parent.MaxDistance = 40
+	end
+	if not plant then
+		if tile.visual then
+			tile.visual.model:Destroy()
+			tile.visual = nil
+		end
+		tile.label.Text = ""
+		return
+	end
+	local prog = progressOf(plant)
+	local stage = math.floor(prog * 10)
+	if not tile.visual or tile.visual.stage ~= stage or tile.visual.seed ~= plant.seed then
+		if tile.visual then
+			tile.visual.model:Destroy()
+		end
+		local shownMut = prog >= 1 and plant.mut or nil
+		local model = Visuals.makeCrop(plant.seed, shownMut, 0.3 + 0.7 * prog)
+		local fruitSize = model.PrimaryPart.Size.Y
+		local stemH = 0.6 + prog * 1.2
+		Visuals.part({
+			Name = "Stem",
+			Size = Vector3.new(0.3, stemH, 0.3),
+			Color = Color3.fromRGB(70, 150, 60),
+			CFrame = CFrame.new(0, -fruitSize / 2 - stemH / 2 + 0.2, 0),
+			Parent = model,
+		})
+		model:PivotTo(tile.soil.CFrame * CFrame.new(0, 0.5 + stemH + fruitSize / 2 - 0.2, 0))
+		model.Parent = tile.model
+		tile.visual = { model = model, stage = stage, seed = plant.seed }
+	end
+	if prog >= 1 then
+		local name = PetUtil.cropName(plant.seed .. "|" .. (plant.mut or "Thuong"))
+		tile.label.Text = "✨ " .. name .. " - Sẵn sàng!"
+		tile.label.TextColor3 = Color3.fromRGB(255, 240, 120)
+	else
+		local remaining = plant.grow - (os.time() - plant.at)
+		tile.label.Text = Config.Seeds[plant.seed].name .. " " .. PetUtil.formatTime(remaining) .. (plant.fert and " 🌿" or "")
+		tile.label.TextColor3 = Color3.new(1, 1, 1)
+	end
+end
+
+local updatePondVisual -- khai báo trước, định nghĩa ở phần AO NUÔI
+
+local function refreshPlot(plot)
+	local data = plot.owner and DataService.get(plot.owner)
+	for idx = 1, WorldBuilder.GRID_SIZE do
+		updateTileVisual(plot, idx, data and data.plots[tileKey(idx)] or nil)
+	end
+	for idx = 1, Config.PondCount do
+		updatePondVisual(plot, idx, data and data.ponds["p" .. idx] or nil)
+	end
+end
+
+local function rollMutation(data, buffs)
+	local luck = 1 + buffs.Hoa
+	if data.luckUntil > os.time() then
+		luck *= 2
+	end
+	for _, m in ipairs(Config.Mutations) do
+		if math.random() < m.chance * luck then
+			return m.key
+		end
+	end
+	return nil
+end
+
+local function consumeSelected(player, data, kind, key)
+	local bag = (kind == "seed" and data.seeds) or (kind == "fry" and data.fry) or data.gear
+	bag[key] = (bag[key] or 0) - 1
+	if bag[key] <= 0 then
+		bag[key] = nil
+		selected[player] = nil
+	end
+end
+
+local function harvest(player, data, idx, plant)
+	local buffs = buffsOf(data)
+	local amount = plant.fert and 2 or 1
+	local extra = {}
+	if math.random() < buffs.Thuy then
+		amount *= 2
+		table.insert(extra, "💧 x2")
+	end
+	local key = plant.seed .. "|" .. (plant.mut or "Thuong")
+	data.crops[key] = (data.crops[key] or 0) + amount
+	if math.random() < buffs.Tho then
+		data.seeds[plant.seed] = (data.seeds[plant.seed] or 0) + 1
+		table.insert(extra, "🪨 hoàn hạt")
+	end
+	data.plots[tileKey(idx)] = nil
+	local msg = string.format("Thu hoạch %d %s", amount, PetUtil.cropName(key))
+	if #extra > 0 then
+		msg ..= " (" .. table.concat(extra, ", ") .. ")"
+	end
+	notify(player, msg, plant.mut and "rare" or "success")
+end
+
+local function onTileClicked(player, plot, idx)
+	if plot.owner ~= player then
+		notify(player, "Đây không phải nông trại của bạn!", "error")
+		return
+	end
+	local data = DataService.get(player)
+	if not data then
+		return
+	end
+	local key = tileKey(idx)
+	local plant = data.plots[key]
+	local sel = selected[player]
+
+	if not plant then
+		if sel and sel.kind == "seed" and (data.seeds[sel.key] or 0) > 0 then
+			local seed = Config.Seeds[sel.key]
+			local buffs = buffsOf(data)
+			data.plots[key] = {
+				seed = sel.key,
+				at = os.time(),
+				grow = math.max(5, math.floor(seed.grow / (1 + buffs.Moc))),
+				mut = rollMutation(data, buffs),
+				fert = false,
+			}
+			consumeSelected(player, data, "seed", sel.key)
+		else
+			notify(player, "Chọn hạt giống ở thanh bên dưới rồi chạm vào ô đất để trồng", "info")
+			return
+		end
+	else
+		local ready = progressOf(plant) >= 1
+		if sel and sel.kind == "gear" and sel.key == "Xeng" then
+			data.plots[key] = nil
+			notify(player, "Đã nhổ bỏ cây", "info")
+		elseif sel and sel.kind == "gear" and sel.key == "BinhTuoi" and not ready and (data.gear.BinhTuoi or 0) > 0 then
+			local remaining = plant.grow - (os.time() - plant.at)
+			plant.at -= math.ceil(remaining * 0.25)
+			consumeSelected(player, data, "gear", "BinhTuoi")
+			notify(player, "💧 Đã tưới cây!", "success")
+		elseif sel and sel.kind == "gear" and sel.key == "PhanBon" and not plant.fert and (data.gear.PhanBon or 0) > 0 then
+			plant.fert = true
+			consumeSelected(player, data, "gear", "PhanBon")
+			notify(player, "🌿 Đã bón phân: sản lượng x2!", "success")
+		elseif ready then
+			harvest(player, data, idx, plant)
+		else
+			notify(player, "Cây còn " .. PetUtil.formatTime(plant.grow - (os.time() - plant.at)) .. " nữa mới chín", "info")
+			return
+		end
+	end
+	updateTileVisual(plot, idx, data.plots[key])
+	push(player)
+end
+
+for _, plot in ipairs(plots) do
+	for idx, tile in ipairs(plot.tiles) do
+		tile.click.MouseClick:Connect(function(player)
+			onTileClicked(player, plot, idx)
+		end)
+	end
+end
+
+----------------------------------------------------------------
+-- AO NUÔI THỦY SẢN
+----------------------------------------------------------------
+local function pondGrowTime(data, fishKey)
+	local buffs = buffsOf(data)
+	return math.max(5, math.floor(Config.Fish[fishKey].grow / (1 + buffs.Thuy)))
+end
+
+updatePondVisual = function(plot, idx, pond)
+	local p = plot.ponds[idx]
+	if not p.label then
+		p.label = Visuals.billboard(p.rim, "", Color3.new(1, 1, 1), 4)
+		p.label.Parent.MaxDistance = 45
+	end
+	if not pond then
+		if p.visual then
+			for _, m in ipairs(p.visual.models) do
+				m:Destroy()
+			end
+			p.visual = nil
+		end
+		p.water.Color = Color3.fromRGB(70, 150, 200)
+		p.label.Text = plot.owner and "Ao trống" or ""
+		p.label.TextColor3 = Color3.fromRGB(200, 230, 255)
+		return
+	end
+	local prog = progressOf(pond)
+	local stage = math.floor(prog * 4)
+	if not p.visual or p.visual.stage ~= stage or p.visual.fish ~= pond.fish then
+		if p.visual then
+			for _, m in ipairs(p.visual.models) do
+				m:Destroy()
+			end
+		end
+		local models = {}
+		local shownMut = prog >= 1 and pond.mut or nil
+		local count = 3
+		for k = 1, count do
+			local m = Visuals.makeFish(pond.fish, shownMut, 0.45 + 0.75 * prog)
+			local angle = (k / count) * math.pi * 2
+			m:PivotTo(p.water.CFrame * CFrame.new(math.cos(angle) * 2.6, 0.6, math.sin(angle) * 2.6) * CFrame.Angles(0, -angle, 0))
+			m.Parent = p.model
+			table.insert(models, m)
+		end
+		p.visual = { models = models, stage = stage, fish = pond.fish }
+	end
+	local info = Config.Fish[pond.fish]
+	if prog >= 1 then
+		p.water.Color = Color3.fromRGB(90, 200, 220)
+		p.label.Text = "✨ " .. PetUtil.cropName(pond.fish .. "|" .. (pond.mut or "Thuong")) .. " - Thu hoạch!"
+		p.label.TextColor3 = Color3.fromRGB(255, 240, 120)
+	else
+		p.water.Color = Color3.fromRGB(70, 150, 200)
+		local remaining = pond.grow - (os.time() - pond.at)
+		p.label.Text = info.name .. " " .. PetUtil.formatTime(remaining) .. ((pond.fed or 0) > 0 and (" 🍤x" .. pond.fed) or "")
+		p.label.TextColor3 = Color3.new(1, 1, 1)
+	end
+end
+
+local function harvestPond(player, data, idx, pond)
+	local buffs = buffsOf(data)
+	local info = Config.Fish[pond.fish]
+	local amount = math.random(info.yield[1], info.yield[2]) + (pond.fed or 0)
+	local extra = {}
+	if math.random() < buffs.Thuy then
+		amount *= 2
+		table.insert(extra, "💧 x2")
+	end
+	local key = pond.fish .. "|" .. (pond.mut or "Thuong")
+	data.crops[key] = (data.crops[key] or 0) + amount
+	if math.random() < buffs.Tho then
+		data.fry[pond.fish] = (data.fry[pond.fish] or 0) + 1
+		table.insert(extra, "🪨 hoàn con giống")
+	end
+	data.ponds["p" .. idx] = nil
+	local msg = string.format("Thu hoạch %d %s", amount, PetUtil.cropName(key))
+	if #extra > 0 then
+		msg ..= " (" .. table.concat(extra, ", ") .. ")"
+	end
+	notify(player, msg, pond.mut and "rare" or "success")
+end
+
+local function onPondClicked(player, plot, idx)
+	if plot.owner ~= player then
+		notify(player, "Đây không phải ao của bạn!", "error")
+		return
+	end
+	local data = DataService.get(player)
+	if not data then
+		return
+	end
+	local key = "p" .. idx
+	local pond = data.ponds[key]
+	local sel = selected[player]
+	if not pond then
+		if sel and sel.kind == "fry" and (data.fry[sel.key] or 0) > 0 then
+			data.ponds[key] = {
+				fish = sel.key,
+				at = os.time(),
+				grow = pondGrowTime(data, sel.key),
+				mut = rollMutation(data, buffsOf(data)),
+				fed = 0,
+			}
+			consumeSelected(player, data, "fry", sel.key)
+			notify(player, "🐟 Đã thả " .. Config.Fish[sel.key].name .. " xuống ao", "success")
+		else
+			notify(player, "Chọn con giống (mua ở quầy 🐟 Thủy Sản) rồi chạm vào ao để thả", "info")
+			return
+		end
+	else
+		local ready = progressOf(pond) >= 1
+		if sel and sel.kind == "gear" and sel.key == "Xeng" then
+			data.ponds[key] = nil
+			notify(player, "Đã xả ao", "info")
+		elseif sel and sel.kind == "gear" and sel.key == "ThucAnCa" and not ready and (data.gear.ThucAnCa or 0) > 0 then
+			if (pond.fed or 0) >= 3 then
+				notify(player, "Ao này đã cho ăn đủ 3 lần rồi", "error")
+				return
+			end
+			local remaining = pond.grow - (os.time() - pond.at)
+			pond.at -= math.ceil(remaining * 0.3)
+			pond.fed = (pond.fed or 0) + 1
+			consumeSelected(player, data, "gear", "ThucAnCa")
+			notify(player, "🍤 Đã cho cá ăn! (+1 con khi thu hoạch)", "success")
+		elseif ready then
+			harvestPond(player, data, idx, pond)
+		else
+			notify(player, "Còn " .. PetUtil.formatTime(pond.grow - (os.time() - pond.at)) .. " nữa mới thu hoạch được", "info")
+			return
+		end
+	end
+	updatePondVisual(plot, idx, data.ponds[key])
+	push(player)
+end
+
+for _, plot in ipairs(plots) do
+	for idx, p in ipairs(plot.ponds) do
+		p.click.MouseClick:Connect(function(player)
+			onPondClicked(player, plot, idx)
+		end)
+	end
+end
+
+----------------------------------------------------------------
+-- PET THEO NGƯỜI CHƠI
+----------------------------------------------------------------
+local function refreshPets(player)
+	for _, m in ipairs(petModels[player] or {}) do
+		m:Destroy()
+	end
+	petModels[player] = {}
+	local data = DataService.get(player)
+	if not data then
+		return
+	end
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	for _, id in ipairs(data.equipped) do
+		local pet = data.pets[id]
+		if pet then
+			local model = Visuals.makePet(pet, nil)
+			if hrp then
+				model:PivotTo(hrp.CFrame * CFrame.new(0, 2, 5))
+			end
+			model.Parent = petFolder
+			table.insert(petModels[player], model)
+		end
+	end
+end
+
+RunService.Heartbeat:Connect(function(dt)
+	local t = os.clock()
+	for player, list in pairs(petModels) do
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if hrp then
+			for i, model in ipairs(list) do
+				local angle = (i - 2) * 0.9
+				local offset = CFrame.new(math.sin(angle) * 5, 1 + math.sin(t * 3 + i) * 0.4, 4 + math.cos(angle) * 1.5)
+				local target = hrp.CFrame * offset
+				model:PivotTo(model:GetPivot():Lerp(target, math.min(1, dt * 6)))
+			end
+		end
+	end
+end)
+
+----------------------------------------------------------------
+-- NHÀ TRIỂN LÃM
+----------------------------------------------------------------
+local function exhibitCount(data)
+	local n = 0
+	for i = 1, Config.ExhibitSlots do
+		if data.exhibit["s" .. i] then
+			n += 1
+		end
+	end
+	return n
+end
+
+local function exhibitIncome(data)
+	local total = 0
+	for i = 1, Config.ExhibitSlots do
+		local item = data.exhibit["s" .. i]
+		if item then
+			if item.kind == "pet" and data.pets[item.id] then
+				total += PetUtil.petExhibitValue(data.pets[item.id])
+			elseif item.kind == "crop" then
+				total += PetUtil.cropExhibitValue(item.key)
+			end
+		end
+	end
+	return total
+end
+
+local function isExhibited(data, petId)
+	for i = 1, Config.ExhibitSlots do
+		local item = data.exhibit["s" .. i]
+		if item and item.kind == "pet" and item.id == petId then
+			return true
+		end
+	end
+	return false
+end
+
+local exhibitFolder = Instance.new("Folder")
+exhibitFolder.Name = "ExhibitItems"
+exhibitFolder.Parent = workspace
+
+-- Mỗi nông trại (plot.index) sở hữu 1 khu trong Nhà Triển Lãm chung
+local function refreshExhibit(plot)
+	local section = sections[plot.index]
+	for _, m in ipairs(exhibitModels[plot.index] or {}) do
+		m:Destroy()
+	end
+	exhibitModels[plot.index] = {}
+	local owner = plot.owner
+	local data = owner and DataService.get(owner)
+	if not data then
+		section.nameLabel.Text = "Khu " .. plot.index .. " • trống"
+		section.likeLabel.Text = "❤ 0"
+		return
+	end
+	section.nameLabel.Text = "Khu của " .. owner.DisplayName
+	section.likeLabel.Text = "❤ " .. PetUtil.formatNumber(data.likes)
+	for i = 1, Config.ExhibitSlots do
+		local item = data.exhibit["s" .. i]
+		local model
+		if item and item.kind == "pet" and data.pets[item.id] then
+			model = Visuals.makePet(data.pets[item.id], nil)
+		elseif item and item.kind == "crop" then
+			local seedKey, mutKey = string.match(item.key, "^([^|]+)|(.+)$")
+			if seedKey and PetUtil.produceInfo(seedKey) then
+				model = Visuals.makeCrop(seedKey, mutKey, 1.4)
+				Visuals.billboard(model.PrimaryPart, PetUtil.cropName(item.key), Color3.fromRGB(255, 240, 180), 2.5)
+			end
+		end
+		if model then
+			local ped = section.pedestals[i]
+			model:PivotTo(ped.CFrame * CFrame.new(0, 1.5 + model.PrimaryPart.Size.Y / 2 + 0.3, 0))
+			model.Parent = exhibitFolder
+			table.insert(exhibitModels[plot.index], model)
+		end
+	end
+end
+
+for _, plot in ipairs(plots) do
+	local section = sections[plot.index]
+	section.likePrompt.Triggered:Connect(function(player)
+		local owner = plot.owner
+		if not owner then
+			notify(player, "Khu trưng bày này chưa có chủ", "info")
+			return
+		end
+		if owner == player then
+			notify(player, "Đây là khu của bạn! Mời bạn bè đến thích nhé", "info")
+			return
+		end
+		local ownerData = DataService.get(owner)
+		local likerData = DataService.get(player)
+		if not ownerData or not likerData then
+			return
+		end
+		if exhibitCount(ownerData) == 0 then
+			notify(player, "Triển lãm đang trống", "info")
+			return
+		end
+		local key = player.UserId .. ":" .. owner.UserId
+		local last = likeCooldown[key]
+		if last and os.time() - last < Config.LikeCooldown then
+			notify(player, "Bạn vừa thích rồi, quay lại sau " .. PetUtil.formatTime(Config.LikeCooldown - (os.time() - last)), "error")
+			return
+		end
+		likeCooldown[key] = os.time()
+		local reward = 50 + 10 * exhibitCount(ownerData)
+		ownerData.likes += 1
+		ownerData.coins += reward
+		likerData.coins += 10
+		notify(owner, "❤ " .. player.DisplayName .. " đã thích khu trưng bày của bạn! +" .. reward .. " xu", "rare")
+		notify(player, "Bạn đã thích triển lãm của " .. owner.DisplayName .. " (+10 xu)", "success")
+		section.likeLabel.Text = "❤ " .. PetUtil.formatNumber(ownerData.likes)
+		push(owner)
+		push(player)
+	end)
+end
+
+task.spawn(function()
+	while true do
+		task.wait(Config.ExhibitIncomeInterval)
+		for player, plot in pairs(playerPlot) do
+			local data = DataService.get(player)
+			if data and plot then
+				local income = exhibitIncome(data)
+				if income > 0 then
+					data.coins += income
+					notify(player, "🏛 Triển lãm mang về +" .. PetUtil.formatNumber(income) .. " xu", "success")
+					push(player)
+				end
+			end
+		end
+	end
+end)
+
+----------------------------------------------------------------
+-- XỬ LÝ YÊU CẦU TỪ CLIENT
+----------------------------------------------------------------
+local function isEquipped(data, id)
+	return table.find(data.equipped, id) ~= nil
+end
+
+local Actions = {}
+
+function Actions.Hello(player)
+	push(player)
+	return true
+end
+
+function Actions.Select(player, data, kind, key)
+	if kind == nil then
+		selected[player] = nil
+		return true
+	end
+	if kind == "seed" and Config.Seeds[key] and (data.seeds[key] or 0) > 0 then
+		selected[player] = { kind = "seed", key = key }
+		return true
+	elseif kind == "fry" and Config.Fish[key] and (data.fry[key] or 0) > 0 then
+		selected[player] = { kind = "fry", key = key }
+		return true
+	elseif kind == "gear" and Config.Gear[key] and Config.Gear[key].selectable and (data.gear[key] or 0) > 0 then
+		selected[player] = { kind = "gear", key = key }
+		return true
+	end
+	return false, "Không thể chọn vật phẩm này"
+end
+
+function Actions.BuyFry(player, data, key)
+	local fish = Config.Fish[key]
+	if not fish then
+		return false, "Con giống không tồn tại"
+	end
+	if (stockFor(player)[key] or 0) <= 0 then
+		return false, "Hết hàng! Đợi lần nhập hàng sau"
+	end
+	if data.coins < fish.price then
+		return false, "Không đủ xu"
+	end
+	data.coins -= fish.price
+	data.fry[key] = (data.fry[key] or 0) + 1
+	bought[player] = bought[player] or {}
+	bought[player][key] = (bought[player][key] or 0) + 1
+	return true, "Đã mua 1 con giống " .. fish.name
+end
+
+function Actions.BuySeed(player, data, key)
+	local seed = Config.Seeds[key]
+	if not seed then
+		return false, "Hạt không tồn tại"
+	end
+	if (stockFor(player)[key] or 0) <= 0 then
+		return false, "Hết hàng! Đợi lần nhập hàng sau"
+	end
+	if data.coins < seed.price then
+		return false, "Không đủ xu"
+	end
+	data.coins -= seed.price
+	data.seeds[key] = (data.seeds[key] or 0) + 1
+	bought[player] = bought[player] or {}
+	bought[player][key] = (bought[player][key] or 0) + 1
+	return true, "Đã mua 1 hạt " .. seed.name
+end
+
+function Actions.BuyGear(player, data, key)
+	local gear = Config.Gear[key]
+	if not gear then
+		return false, "Vật phẩm không tồn tại"
+	end
+	if gear.reusable and (data.gear[key] or 0) > 0 then
+		return false, "Bạn đã có " .. gear.name .. " rồi"
+	end
+	if data.coins < gear.price then
+		return false, "Không đủ xu"
+	end
+	data.coins -= gear.price
+	data.gear[key] = (data.gear[key] or 0) + 1
+	return true, "Đã mua " .. gear.name
+end
+
+local function newPet(data, els, tier, syn)
+	local id = "p" .. data.nextPetId
+	data.nextPetId += 1
+	data.pets[id] = { id = id, els = els, tier = tier, syn = syn or false }
+	return data.pets[id]
+end
+
+function Actions.BuyPet(player, data, element)
+	if not Config.Elements[element] then
+		return false, "Pet không tồn tại"
+	end
+	if data.coins < Config.BasicPetPrice then
+		return false, "Không đủ xu"
+	end
+	data.coins -= Config.BasicPetPrice
+	local pet = newPet(data, { element }, 1, false)
+	if #data.equipped < Config.MaxEquippedPets then
+		table.insert(data.equipped, pet.id)
+		refreshPets(player)
+	end
+	return true, "Đã mua " .. PetUtil.petName(pet) .. "!"
+end
+
+local function sellPrice(data, key)
+	return math.floor(PetUtil.cropValue(key) * (1 + buffsOf(data).Kim))
+end
+
+function Actions.SellCrop(player, data, key)
+	local n = data.crops[key] or 0
+	if n <= 0 then
+		return false, "Không có nông sản này"
+	end
+	local total = sellPrice(data, key) * n
+	data.crops[key] = nil
+	data.coins += total
+	return true, "Bán được " .. PetUtil.formatNumber(total) .. " xu"
+end
+
+function Actions.SellAll(player, data)
+	local total = 0
+	for key, n in pairs(data.crops) do
+		total += sellPrice(data, key) * n
+	end
+	if total <= 0 then
+		return false, "Túi không có nông sản"
+	end
+	data.crops = {}
+	data.coins += total
+	return true, "Bán tất cả được " .. PetUtil.formatNumber(total) .. " xu"
+end
+
+function Actions.Equip(player, data, id)
+	if not data.pets[id] then
+		return false, "Pet không tồn tại"
+	end
+	if isEquipped(data, id) then
+		return false, "Pet đã được trang bị"
+	end
+	if isExhibited(data, id) then
+		return false, "Pet đang được trưng bày"
+	end
+	if #data.equipped >= Config.MaxEquippedPets then
+		return false, "Chỉ trang bị tối đa " .. Config.MaxEquippedPets .. " pet"
+	end
+	table.insert(data.equipped, id)
+	refreshPets(player)
+	return true
+end
+
+function Actions.Unequip(player, data, id)
+	local i = table.find(data.equipped, id)
+	if not i then
+		return false
+	end
+	table.remove(data.equipped, i)
+	refreshPets(player)
+	return true
+end
+
+function Actions.Fuse(player, data, idA, idB)
+	local a, b = data.pets[idA], data.pets[idB]
+	if not a or not b or idA == idB then
+		return false, "Chọn 2 pet khác nhau"
+	end
+	for _, id in ipairs({ idA, idB }) do
+		if isEquipped(data, id) or isExhibited(data, id) then
+			return false, "Hãy gỡ pet khỏi trang bị / triển lãm trước khi hợp thể"
+		end
+	end
+	local result, reason = PetUtil.previewFusion(a, b)
+	if not result then
+		return false, reason
+	end
+	if (data.gear.ManhHopThe or 0) < result.shardCost then
+		return false, "Cần " .. result.shardCost .. " Mảnh Hợp Thể (mua ở Cửa hàng Dụng cụ)"
+	end
+	data.gear.ManhHopThe -= result.shardCost
+	if data.gear.ManhHopThe <= 0 then
+		data.gear.ManhHopThe = nil
+	end
+	if math.random() > result.chance then
+		return false, "💥 Tương khắc! Hợp thể thất bại, mất " .. result.shardCost .. " mảnh (pet vẫn còn)"
+	end
+	data.pets[idA] = nil
+	data.pets[idB] = nil
+	local pet = newPet(data, result.els, result.tier, result.syn)
+	notify(player, "✨ Hợp thể thành công: " .. PetUtil.petName(pet) .. " [" .. PetUtil.tierInfo(pet.tier).name .. "]", "rare")
+	return true
+end
+
+function Actions.Exhibit(player, data, kind, idOrKey)
+	local slot
+	for i = 1, Config.ExhibitSlots do
+		if not data.exhibit["s" .. i] then
+			slot = "s" .. i
+			break
+		end
+	end
+	if not slot then
+		return false, "Nhà triển lãm đã đầy"
+	end
+	if kind == "pet" then
+		if not data.pets[idOrKey] then
+			return false, "Pet không tồn tại"
+		end
+		if isEquipped(data, idOrKey) or isExhibited(data, idOrKey) then
+			return false, "Pet đang được dùng"
+		end
+		data.exhibit[slot] = { kind = "pet", id = idOrKey }
+	elseif kind == "crop" then
+		if (data.crops[idOrKey] or 0) <= 0 then
+			return false, "Không có nông sản này"
+		end
+		data.crops[idOrKey] -= 1
+		if data.crops[idOrKey] <= 0 then
+			data.crops[idOrKey] = nil
+		end
+		data.exhibit[slot] = { kind = "crop", key = idOrKey }
+	else
+		return false
+	end
+	local plot = playerPlot[player]
+	if plot then
+		refreshExhibit(plot)
+	end
+	return true, "Đã đưa vào nhà triển lãm"
+end
+
+function Actions.Unexhibit(player, data, slotIndex)
+	local slot = "s" .. tostring(slotIndex)
+	local item = data.exhibit[slot]
+	if not item then
+		return false
+	end
+	if item.kind == "crop" then
+		data.crops[item.key] = (data.crops[item.key] or 0) + 1
+	end
+	data.exhibit[slot] = nil
+	local plot = playerPlot[player]
+	if plot then
+		refreshExhibit(plot)
+	end
+	return true, "Đã gỡ khỏi triển lãm"
+end
+
+function Actions.SetTutorial(player, data, n, completed)
+	if type(n) ~= "number" then
+		return false
+	end
+	n = math.clamp(math.floor(n), 0, 50)
+	data.tutorial = n
+	if n == 0 and completed == true and not data.tutorialRewarded then
+		data.tutorialRewarded = true
+		data.coins += Config.TutorialReward
+		notify(player, "🎉 Hoàn thành hướng dẫn! +" .. Config.TutorialReward .. " xu", "rare")
+	end
+	return true
+end
+
+function Actions.UseLuck(player, data)
+	if (data.gear.BuaMayMan or 0) <= 0 then
+		return false, "Bạn không có Bùa May Mắn"
+	end
+	data.gear.BuaMayMan -= 1
+	if data.gear.BuaMayMan <= 0 then
+		data.gear.BuaMayMan = nil
+	end
+	data.luckUntil = math.max(data.luckUntil, os.time()) + Config.LuckCharmSeconds
+	return true, "🍀 May mắn x2 trong " .. math.floor(Config.LuckCharmSeconds / 60) .. " phút!"
+end
+
+local lastRequest = {}
+Request.OnServerInvoke = function(player, action, ...)
+	if type(action) ~= "string" or not Actions[action] then
+		return false, "Yêu cầu không hợp lệ"
+	end
+	local now = os.clock()
+	if lastRequest[player] and now - lastRequest[player] < 0.08 then
+		return false, "Thao tác quá nhanh"
+	end
+	lastRequest[player] = now
+	if action == "Hello" then
+		return Actions.Hello(player)
+	end
+	local data = DataService.get(player)
+	if not data then
+		return false, "Dữ liệu chưa sẵn sàng"
+	end
+	local ok, a, b = pcall(Actions[action], player, data, ...)
+	if not ok then
+		warn("[Request]", action, a)
+		return false, "Lỗi máy chủ"
+	end
+	push(player)
+	return a, b
+end
+
+----------------------------------------------------------------
+-- VÀO / RỜI GAME
+----------------------------------------------------------------
+-- Giữ chỗ 1 nông trại trống ngay khi vào (trước khi tải dữ liệu)
+local function reservePlot(player)
+	for _, plot in ipairs(plots) do
+		if not plot.owner then
+			plot.owner = player
+			playerPlot[player] = plot
+			return plot
+		end
+	end
+	return nil
+end
+
+local function activatePlot(player, plot)
+	plot.ownerLabel.Text = "🌾 Nông trại của " .. player.DisplayName
+	refreshPlot(plot)
+	refreshExhibit(plot)
+end
+
+-- Chuyển dữ liệu cũ sang phiên bản mới (triển lãm 6 bục riêng → 3 bục trong nhà chung)
+local function migrateData(data)
+	for i = Config.ExhibitSlots + 1, 10 do
+		local item = data.exhibit["s" .. i]
+		if item then
+			if item.kind == "crop" then
+				data.crops[item.key] = (data.crops[item.key] or 0) + 1
+			end
+			data.exhibit["s" .. i] = nil
+		end
+	end
+end
+
+local function onCharacter(player, char)
+	local plot = playerPlot[player]
+	local hrp = char:WaitForChild("HumanoidRootPart", 10)
+	if plot and hrp then
+		task.wait(0.1)
+		char:PivotTo(plot.spawnCFrame)
+	end
+	refreshPets(player)
+end
+
+Players.PlayerAdded:Connect(function(player)
+	local plot = reservePlot(player)
+	if not plot or #Players:GetPlayers() > Config.MaxPlayers then
+		if plot then
+			plot.owner = nil
+			playerPlot[player] = nil
+		end
+		player:Kick("Server đã đủ " .. Config.MaxPlayers .. " người chơi. Hãy vào server khác nhé!")
+		return
+	end
+	local data, ok = DataService.load(player)
+	if not player.Parent then
+		DataService.release(player)
+		return
+	end
+	migrateData(data)
+	if not ok then
+		task.delay(5, function()
+			if player.Parent then
+				notify(player, "⚠ Không tải được dữ liệu lưu. Tiến trình lần này sẽ KHÔNG được lưu (trong Studio hãy bật API Services).", "error")
+			end
+		end)
+	end
+	activatePlot(player, plot)
+	player.CharacterAdded:Connect(function(char)
+		onCharacter(player, char)
+	end)
+	if player.Character then
+		onCharacter(player, player.Character)
+	end
+	push(player)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+	local plot = playerPlot[player]
+	for _, m in ipairs(petModels[player] or {}) do
+		m:Destroy()
+	end
+	petModels[player] = nil
+	selected[player] = nil
+	bought[player] = nil
+	lastRequest[player] = nil
+	DataService.release(player)
+	if plot then
+		plot.owner = nil
+		playerPlot[player] = nil
+		plot.ownerLabel.Text = "Nông trại trống"
+		refreshPlot(plot)
+		refreshExhibit(plot)
+	end
+end)
+
+----------------------------------------------------------------
+-- VÒNG LẶP CHÍNH
+----------------------------------------------------------------
+restock()
+task.spawn(function()
+	while true do
+		task.wait(1)
+		if os.time() >= restockAt then
+			restock()
+		end
+		for _, plot in ipairs(plots) do
+			if plot.owner then
+				refreshPlot(plot)
+			end
+		end
+	end
+end)
+
+print("[Nông Trại Ngũ Hành] Server đã sẵn sàng!")
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="9">
+        <Properties>
+          <string name="Name">Visuals</string>
+          <string name="Source"><![CDATA[-- Tạo mô hình 3D cho pet và nông sản (dựng bằng Part, không cần asset)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Config = require(ReplicatedStorage.Shared.Config)
+local PetUtil = require(ReplicatedStorage.Shared.PetUtil)
+
+local Visuals = {}
+
+local function part(props)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Massless = true
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	for k, v in pairs(props) do
+		if k ~= "Parent" then
+			(p :: any)[k] = v
+		end
+	end
+	p.Parent = props.Parent
+	return p
+end
+
+local function billboard(adornee, text, color, offsetY)
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.fromOffset(160, 40)
+	bb.StudsOffset = Vector3.new(0, offsetY, 0)
+	bb.AlwaysOnTop = false
+	bb.MaxDistance = 60
+	bb.Adornee = adornee
+	bb.Parent = adornee
+	local lbl = Instance.new("TextLabel")
+	lbl.Name = "Label"
+	lbl.Size = UDim2.fromScale(1, 1)
+	lbl.BackgroundTransparency = 1
+	lbl.TextColor3 = color
+	lbl.TextStrokeTransparency = 0.3
+	lbl.TextScaled = true
+	lbl.Font = Enum.Font.FredokaOne
+	lbl.Text = text
+	lbl.Parent = bb
+	return lbl
+end
+
+function Visuals.makePet(pet, ownerName)
+	local model = Instance.new("Model")
+	model.Name = "Pet"
+	local main = Config.Elements[pet.els[1]].color
+	local size = 1.6 + pet.tier * 0.35
+	local body = part({ Name = "Body", Shape = Enum.PartType.Ball, Size = Vector3.one * size, Color = main, Material = Enum.Material.SmoothPlastic, CFrame = CFrame.new(), Parent = model })
+	-- tai
+	for _, side in ipairs({ -1, 1 }) do
+		part({ Name = "Ear", Size = Vector3.new(size * 0.22, size * 0.45, size * 0.22), Color = main, CFrame = CFrame.new(side * size * 0.28, size * 0.5, 0) * CFrame.Angles(0, 0, -side * 0.3), Parent = model })
+		part({ Name = "Eye", Shape = Enum.PartType.Ball, Size = Vector3.one * size * 0.18, Color = Color3.new(0.1, 0.1, 0.1), CFrame = CFrame.new(side * size * 0.2, size * 0.1, -size * 0.45), Parent = model })
+	end
+	-- quả cầu nguyên tố quay quanh cho pet đa hệ
+	for i = 2, #pet.els do
+		local angle = (i - 2) / math.max(1, #pet.els - 1) * math.pi * 2
+		part({
+			Name = "Orb",
+			Shape = Enum.PartType.Ball,
+			Size = Vector3.one * size * 0.3,
+			Color = Config.Elements[pet.els[i]].color,
+			Material = Enum.Material.Neon,
+			CFrame = CFrame.new(math.cos(angle) * size * 0.8, size * 0.35, math.sin(angle) * size * 0.8),
+			Parent = model,
+		})
+	end
+	if pet.tier >= 3 then
+		local light = Instance.new("PointLight")
+		light.Color = PetUtil.tierInfo(pet.tier).color
+		light.Range = 6 + pet.tier
+		light.Brightness = 1.5
+		light.Parent = body
+	end
+	if pet.tier >= 4 or pet.syn then
+		local sparkle = Instance.new("ParticleEmitter")
+		sparkle.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		sparkle.Color = ColorSequence.new(PetUtil.tierInfo(pet.tier).color)
+		sparkle.Size = NumberSequence.new(0.3)
+		sparkle.Rate = pet.tier * 2
+		sparkle.Lifetime = NumberRange.new(0.8, 1.2)
+		sparkle.Speed = NumberRange.new(0.5, 1)
+		sparkle.SpreadAngle = Vector2.new(180, 180)
+		sparkle.Parent = body
+	end
+	local title = PetUtil.petName(pet) .. " [" .. PetUtil.tierInfo(pet.tier).name .. "]"
+	if ownerName then
+		title = title .. "\n" .. ownerName
+	end
+	billboard(body, title, PetUtil.tierInfo(pet.tier).color, size * 0.5 + 1.2)
+	model.PrimaryPart = body
+	return model
+end
+
+local function mutationLook(baseColor, mutKey)
+	local color, material, sizeMult = baseColor, Enum.Material.SmoothPlastic, 1
+	for _, m in ipairs(Config.Mutations) do
+		if m.key == mutKey then
+			if m.color then
+				color = m.color
+				material = Enum.Material.Neon
+			end
+			if m.key == "KhongLo" then
+				sizeMult = 1.6
+			end
+		end
+	end
+	return color, material, sizeMult
+end
+
+local function ovalPart(props, scale)
+	local p = part(props)
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Scale = scale or Vector3.one
+	mesh.Parent = p
+	return p
+end
+
+-- Thủy sản: cá / tôm / cua dựng bằng Part
+function Visuals.makeFish(fishKey, mutKey, scale)
+	local fish = Config.Fish[fishKey]
+	local color, material, sizeMult = mutationLook(fish.color, mutKey)
+	local s = scale * sizeMult
+	local model = Instance.new("Model")
+	model.Name = "Fish"
+	local body
+	if fish.shape == "crab" then
+		body = ovalPart({ Name = "Body", Size = Vector3.new(2.2, 0.9, 1.6) * s, Color = color, Material = material, CFrame = CFrame.new(), Parent = model })
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "Claw", Shape = Enum.PartType.Ball, Size = Vector3.one * 0.8 * s, Color = color, Material = material, CFrame = CFrame.new(side * 1.3 * s, 0.1 * s, -0.9 * s), Parent = model })
+			for k = -1, 1 do
+				part({ Name = "Leg", Size = Vector3.new(0.9, 0.15, 0.15) * s, Color = color, Material = material, CFrame = CFrame.new(side * 1.2 * s, -0.2 * s, k * 0.45 * s) * CFrame.Angles(0, 0, side * 0.5), Parent = model })
+			end
+		end
+	elseif fish.shape == "shrimp" then
+		body = ovalPart({ Name = "Body", Size = Vector3.new(0.8, 0.8, 1.2) * s, Color = color, Material = material, CFrame = CFrame.new(), Parent = model })
+		for k = 1, 3 do
+			ovalPart({ Name = "Segment", Size = Vector3.new(0.7, 0.6, 0.6) * s * (1 - k * 0.15), Color = color, Material = material, CFrame = CFrame.new(0, -0.15 * k * s, (0.5 + 0.45 * k) * s), Parent = model })
+		end
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "Antenna", Size = Vector3.new(0.08, 0.08, 1.4) * s, Color = color, CFrame = CFrame.new(side * 0.2 * s, 0.25 * s, -1.1 * s) * CFrame.Angles(0.3, side * 0.3, 0), Parent = model })
+		end
+	else
+		body = ovalPart({ Name = "Body", Size = Vector3.new(0.8, 1.2, 2.4) * s, Color = color, Material = material, CFrame = CFrame.new(), Parent = model })
+		part({ Name = "Tail", Size = Vector3.new(0.15, 1.1, 0.8) * s, Color = color, Material = material, CFrame = CFrame.new(0, 0, 1.4 * s), Parent = model })
+		if fishKey == "CaKoi" and material ~= Enum.Material.Neon then
+			ovalPart({ Name = "Spot", Size = Vector3.new(0.85, 0.6, 0.9) * s, Color = Color3.fromRGB(235, 90, 40), CFrame = CFrame.new(0, 0.25 * s, -0.2 * s), Parent = model })
+		end
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "Eye", Shape = Enum.PartType.Ball, Size = Vector3.one * 0.22 * s, Color = Color3.new(0.1, 0.1, 0.1), CFrame = CFrame.new(side * 0.33 * s, 0.15 * s, -0.8 * s), Parent = model })
+		end
+	end
+	model.PrimaryPart = body
+	return model
+end
+
+-- Nông sản (dùng cho cây trên ruộng và vật trưng bày). Tự chuyển sang mô hình cá nếu là thủy sản.
+function Visuals.makeCrop(seedKey, mutKey, scale)
+	if Config.Fish[seedKey] then
+		return Visuals.makeFish(seedKey, mutKey, scale)
+	end
+	local seed = Config.Seeds[seedKey]
+	local model = Instance.new("Model")
+	model.Name = "Crop"
+	local color, material, sizeMult = mutationLook(seed.color, mutKey)
+	local s = 1.6 * scale * sizeMult
+	local fruit = part({ Name = "Fruit", Shape = Enum.PartType.Ball, Size = Vector3.one * s, Color = color, Material = material, CFrame = CFrame.new(), Parent = model })
+	part({ Name = "Leaf", Size = Vector3.new(s * 0.2, s * 0.5, s * 0.2), Color = Color3.fromRGB(60, 160, 60), CFrame = CFrame.new(0, s * 0.6, 0), Parent = model })
+	model.PrimaryPart = fruit
+	return model
+end
+
+Visuals.billboard = billboard
+Visuals.part = part
+
+return Visuals
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="10">
+        <Properties>
+          <string name="Name">WorldBuilder</string>
+          <string name="Source"><![CDATA[-- Dựng toàn bộ map bằng code: nền, đường, 5 quầy hàng, 5 nông trại (ruộng + ao),
+-- và 1 Nhà Triển Lãm chung chia 5 khu.
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Config = require(ReplicatedStorage.Shared.Config)
+
+local WorldBuilder = {}
+
+local PLOT_POSITIONS = {
+	Vector3.new(-90, 0, -80), Vector3.new(0, 0, -80), Vector3.new(90, 0, -80),
+	Vector3.new(-90, 0, 80), Vector3.new(90, 0, 80),
+}
+local HALL_POSITION = Vector3.new(0, 0, 85)
+local GRID_COLS, GRID_ROWS = 6, 4
+
+local function part(props)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	for k, v in pairs(props) do
+		if k ~= "Parent" then
+			(p :: any)[k] = v
+		end
+	end
+	p.Parent = props.Parent
+	return p
+end
+
+local function surfaceText(target, face, text, textColor, bg)
+	local sg = Instance.new("SurfaceGui")
+	sg.Face = face
+	sg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	sg.PixelsPerStud = 40
+	sg.Parent = target
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.fromScale(1, 1)
+	lbl.BackgroundColor3 = bg or Color3.fromRGB(60, 40, 25)
+	lbl.BackgroundTransparency = bg and 0 or 1
+	lbl.TextColor3 = textColor or Color3.new(1, 1, 1)
+	lbl.TextScaled = true
+	lbl.Font = Enum.Font.FredokaOne
+	lbl.Text = text
+	lbl.Parent = sg
+	return lbl
+end
+
+local function makeNPC(parent, cf, shirt, name)
+	local model = Instance.new("Model")
+	model.Name = name
+	local torso = part({ Name = "Torso", Size = Vector3.new(2, 2, 1), CFrame = cf * CFrame.new(0, 3, 0), Color = shirt, Parent = model })
+	part({ Name = "Head", Shape = Enum.PartType.Ball, Size = Vector3.new(1.6, 1.6, 1.6), CFrame = cf * CFrame.new(0, 4.8, 0), Color = Color3.fromRGB(255, 220, 180), Parent = model })
+	part({ Name = "Hat", Size = Vector3.new(2.2, 0.4, 2.2), CFrame = cf * CFrame.new(0, 5.6, 0), Color = Color3.fromRGB(230, 200, 120), Parent = model })
+	part({ Name = "Legs", Size = Vector3.new(2, 2, 1), CFrame = cf * CFrame.new(0, 1, 0), Color = Color3.fromRGB(60, 70, 110), Parent = model })
+	model.PrimaryPart = torso
+	model.Parent = parent
+	return model
+end
+
+local function makePrompt(parent, actionText, objectText, hold)
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.ActionText = actionText
+	prompt.ObjectText = objectText
+	prompt.HoldDuration = hold or 0
+	prompt.MaxActivationDistance = 12
+	prompt.RequiresLineOfSight = false
+	prompt.Parent = parent
+	return prompt
+end
+
+local function makeStall(parent, pos, title, color, panel, actionText)
+	local folder = Instance.new("Model")
+	folder.Name = panel -- tên cố định để hướng dẫn tìm được quầy
+	local cf = CFrame.new(pos)
+	part({ Name = "Floor", Size = Vector3.new(18, 1, 12), CFrame = cf * CFrame.new(0, 0.5, 0), Color = Color3.fromRGB(150, 110, 70), Material = Enum.Material.WoodPlanks, Parent = folder })
+	local counter = part({ Name = "Counter", Size = Vector3.new(14, 3.5, 2), CFrame = cf * CFrame.new(0, 2.75, 0), Color = Color3.fromRGB(120, 80, 45), Material = Enum.Material.Wood, Parent = folder })
+	for _, x in ipairs({ -8, 8 }) do
+		for _, z in ipairs({ -5, 5 }) do
+			part({ Size = Vector3.new(1, 10, 1), CFrame = cf * CFrame.new(x, 6, z), Color = Color3.fromRGB(100, 70, 40), Material = Enum.Material.Wood, Parent = folder })
+		end
+	end
+	part({ Name = "Roof", Size = Vector3.new(20, 1, 14), CFrame = cf * CFrame.new(0, 11.5, 0), Color = color, Material = Enum.Material.Fabric, Parent = folder })
+	local sign = part({ Name = "Sign", Size = Vector3.new(14, 3, 0.5), CFrame = cf * CFrame.new(0, 13.5, 0), Color = Color3.fromRGB(60, 40, 25), Parent = folder })
+	surfaceText(sign, Enum.NormalId.Front, title, Color3.new(1, 1, 1))
+	surfaceText(sign, Enum.NormalId.Back, title, Color3.new(1, 1, 1))
+	makeNPC(folder, cf * CFrame.new(0, 1, -2.5) * CFrame.Angles(0, math.pi, 0), color, "NPC")
+
+	local prompt = makePrompt(counter, actionText, title)
+	prompt.MaxActivationDistance = 14
+	prompt:SetAttribute("Panel", panel)
+	folder.Parent = parent
+	return folder
+end
+
+local function buildPlot(parent, index, origin)
+	local cf = CFrame.lookAt(origin, Vector3.new(origin.X, 0, 0)) -- mặt trước (-Z) hướng ra đường chính
+	local model = Instance.new("Model")
+	model.Name = "Plot" .. index
+
+	part({ Name = "Base", Size = Vector3.new(56, 1, 56), CFrame = cf * CFrame.new(0, 0.5, 0), Color = Color3.fromRGB(110, 75, 45), Material = Enum.Material.Ground, Parent = model })
+	part({ Name = "PondArea", Size = Vector3.new(56, 0.2, 18), CFrame = cf * CFrame.new(0, 1.1, 18), Color = Color3.fromRGB(110, 170, 80), Material = Enum.Material.Grass, Parent = model })
+	-- viền gỗ
+	for _, info in ipairs({
+		{ Vector3.new(58, 1.5, 1), Vector3.new(0, 1.25, -28.5) },
+		{ Vector3.new(58, 1.5, 1), Vector3.new(0, 1.25, 28.5) },
+		{ Vector3.new(1, 1.5, 56), Vector3.new(-28.5, 1.25, 0) },
+		{ Vector3.new(1, 1.5, 56), Vector3.new(28.5, 1.25, 0) },
+	}) do
+		part({ Size = info[1], CFrame = cf * CFrame.new(info[2]), Color = Color3.fromRGB(140, 95, 55), Material = Enum.Material.WoodPlanks, Parent = model })
+	end
+
+	-- biển tên nông trại
+	local signPost = part({ Name = "OwnerSign", Size = Vector3.new(16, 4, 0.5), CFrame = cf * CFrame.new(0, 4, -30.5), Color = Color3.fromRGB(60, 40, 25), Parent = model })
+	local ownerLabel = surfaceText(signPost, Enum.NormalId.Front, "Nông trại trống", Color3.fromRGB(255, 240, 200))
+	surfaceText(signPost, Enum.NormalId.Back, "Nông trại", Color3.fromRGB(255, 240, 200))
+
+	-- ô đất (phía trước)
+	local tilesFolder = Instance.new("Folder")
+	tilesFolder.Name = "Tiles"
+	tilesFolder.Parent = model
+	local tiles = {}
+	for r = 1, GRID_ROWS do
+		for c = 1, GRID_COLS do
+			local idx = (r - 1) * GRID_COLS + c
+			local tileModel = Instance.new("Model")
+			tileModel.Name = "Tile" .. idx
+			local soil = part({
+				Name = "Soil",
+				Size = Vector3.new(7, 1, 7),
+				CFrame = cf * CFrame.new(-20 + (c - 1) * 8, 1.3, -24 + (r - 1) * 8),
+				Color = Color3.fromRGB(85, 55, 30),
+				Material = Enum.Material.Mud,
+				Parent = tileModel,
+			})
+			local click = Instance.new("ClickDetector")
+			click.MaxActivationDistance = 45
+			click.Parent = tileModel
+			tileModel.PrimaryPart = soil
+			tileModel.Parent = tilesFolder
+			tiles[idx] = { model = tileModel, soil = soil, click = click }
+		end
+	end
+
+	-- AO NUÔI THỦY SẢN (phía sau)
+	local pondsFolder = Instance.new("Folder")
+	pondsFolder.Name = "Ponds"
+	pondsFolder.Parent = model
+	local ponds = {}
+	local sign = part({ Name = "PondSign", Size = Vector3.new(14, 2.4, 0.4), CFrame = cf * CFrame.new(0, 3, 9.2), Color = Color3.fromRGB(40, 90, 140), Parent = model })
+	surfaceText(sign, Enum.NormalId.Front, "🐟 Ao Nuôi Thủy Sản", Color3.new(1, 1, 1))
+	for i = 1, Config.PondCount do
+		local pondModel = Instance.new("Model")
+		pondModel.Name = "Pond" .. i
+		local pcf = cf * CFrame.new(-21 + (i - 1) * 14, 0, 19)
+		local rim = part({ Name = "Rim", Size = Vector3.new(12.5, 1.6, 12), CFrame = pcf * CFrame.new(0, 1.6, 0), Color = Color3.fromRGB(150, 150, 140), Material = Enum.Material.Cobblestone, Parent = pondModel })
+		local water = part({
+			Name = "Water",
+			Size = Vector3.new(10.5, 0.4, 10),
+			CFrame = pcf * CFrame.new(0, 2.3, 0),
+			Color = Color3.fromRGB(70, 150, 200),
+			Material = Enum.Material.Glass,
+			Transparency = 0.25,
+			CanCollide = false,
+			Parent = pondModel,
+		})
+		local click = Instance.new("ClickDetector")
+		click.MaxActivationDistance = 45
+		click.Parent = pondModel
+		pondModel.PrimaryPart = rim
+		pondModel.Parent = pondsFolder
+		ponds[i] = { model = pondModel, water = water, rim = rim, click = click }
+	end
+
+	model.Parent = parent
+
+	return {
+		index = index,
+		cframe = cf,
+		model = model,
+		tiles = tiles,
+		ponds = ponds,
+		ownerLabel = ownerLabel,
+		spawnCFrame = cf * CFrame.new(0, 4, -35) * CFrame.Angles(0, math.pi, 0),
+		owner = nil,
+	}
+end
+
+-- NHÀ TRIỂN LÃM CHUNG: 5 khu, mỗi khu thuộc về 1 nông trại
+local function buildHall(parent, sectionCount)
+	local hcf = CFrame.lookAt(HALL_POSITION, Vector3.new(HALL_POSITION.X, 0, 0))
+	local house = Instance.new("Model")
+	house.Name = "ExhibitionHall"
+	local width, depth = 86, 32
+	local wallColor = Color3.fromRGB(250, 245, 235)
+	part({ Name = "Floor", Size = Vector3.new(width, 1, depth), CFrame = hcf * CFrame.new(0, 0.5, 0), Color = Color3.fromRGB(235, 225, 205), Material = Enum.Material.Marble, Parent = house })
+	part({ Name = "Carpet", Size = Vector3.new(width - 4, 0.1, 6), CFrame = hcf * CFrame.new(0, 1.05, -8), Color = Color3.fromRGB(170, 40, 50), Material = Enum.Material.Fabric, Parent = house })
+	part({ Name = "BackWall", Size = Vector3.new(width, 16, 1), CFrame = hcf * CFrame.new(0, 9, depth / 2 - 0.5), Color = wallColor, Parent = house })
+	part({ Name = "LeftWall", Size = Vector3.new(1, 16, depth), CFrame = hcf * CFrame.new(-width / 2 + 0.5, 9, 0), Color = wallColor, Parent = house })
+	part({ Name = "RightWall", Size = Vector3.new(1, 16, depth), CFrame = hcf * CFrame.new(width / 2 - 0.5, 9, 0), Color = wallColor, Parent = house })
+	part({ Name = "Roof", Size = Vector3.new(width + 3, 1, depth + 3), CFrame = hcf * CFrame.new(0, 17.5, 0), Color = Color3.fromRGB(170, 50, 50), Material = Enum.Material.Slate, Parent = house })
+	for k = 0, 6 do
+		local x = -width / 2 + 0.8 + k * (width - 1.6) / 6
+		part({ Size = Vector3.new(1.6, 17, 1.6), CFrame = hcf * CFrame.new(x, 9, -depth / 2), Color = Color3.fromRGB(200, 170, 90), Material = Enum.Material.Marble, Parent = house })
+	end
+	local banner = part({ Name = "Banner", Size = Vector3.new(40, 3.5, 0.5), CFrame = hcf * CFrame.new(0, 15.2, -depth / 2 - 0.3), Color = Color3.fromRGB(170, 50, 50), Parent = house })
+	surfaceText(banner, Enum.NormalId.Front, "🏛 Nhà Triển Lãm Chung", Color3.fromRGB(255, 230, 150))
+
+	local sections = {}
+	local secW = (width - 2) / sectionCount
+	for i = 1, sectionCount do
+		local sx = -width / 2 + 1 + secW * (i - 0.5)
+		local scf = hcf * CFrame.new(sx, 0, 0)
+		if i > 1 then
+			part({ Name = "Divider", Size = Vector3.new(0.6, 5, 14), CFrame = hcf * CFrame.new(-width / 2 + 1 + secW * (i - 1), 3.5, 7), Color = Color3.fromRGB(200, 170, 90), Material = Enum.Material.Marble, Parent = house })
+		end
+		local nameBoard = part({ Name = "NameBoard" .. i, Size = Vector3.new(secW - 2, 3, 0.4), CFrame = scf * CFrame.new(0, 11, depth / 2 - 1.2), Color = Color3.fromRGB(60, 40, 25), Parent = house })
+		local nameLabel = surfaceText(nameBoard, Enum.NormalId.Front, "Khu " .. i .. " • trống", Color3.fromRGB(255, 240, 200))
+		local likeBoard = part({ Name = "LikeBoard" .. i, Size = Vector3.new(secW - 6, 1.6, 0.4), CFrame = scf * CFrame.new(0, 8.6, depth / 2 - 1.2), Color = Color3.fromRGB(60, 40, 25), Parent = house })
+		local likeLabel = surfaceText(likeBoard, Enum.NormalId.Front, "❤ 0", Color3.fromRGB(255, 150, 170))
+		local likeStand = part({ Name = "LikeStand" .. i, Size = Vector3.new(2, 3, 2), CFrame = scf * CFrame.new(0, 2.5, -4), Color = Color3.fromRGB(255, 150, 170), Material = Enum.Material.SmoothPlastic, Parent = house })
+		local likePrompt = makePrompt(likeStand, "Thích khu này ❤", "Khu " .. i, 0.3)
+
+		local pedestals = {}
+		local pedCount = Config.ExhibitSlots
+		for j = 1, pedCount do
+			local px = (j - (pedCount + 1) / 2) * (secW / pedCount)
+			local ped = part({
+				Name = "Pedestal" .. i .. "_" .. j,
+				Size = Vector3.new(4, 3, 4),
+				CFrame = scf * CFrame.new(px, 2.5, 7),
+				Color = Color3.fromRGB(215, 190, 120),
+				Material = Enum.Material.Marble,
+				Parent = house,
+			})
+			local light = Instance.new("SpotLight")
+			light.Face = Enum.NormalId.Top
+			light.Brightness = 2
+			light.Range = 10
+			light.Parent = ped
+			pedestals[j] = ped
+		end
+		sections[i] = { nameLabel = nameLabel, likeLabel = likeLabel, likePrompt = likePrompt, pedestals = pedestals }
+	end
+	house.Parent = parent
+	return sections
+end
+
+function WorldBuilder.build()
+	local world = Instance.new("Folder")
+	world.Name = "World"
+	world.Parent = workspace
+
+	local sand = Color3.fromRGB(210, 190, 150)
+	part({ Name = "Ground", Size = Vector3.new(420, 2, 360), CFrame = CFrame.new(0, -1, 0), Color = Color3.fromRGB(100, 175, 70), Material = Enum.Material.Grass, Parent = world })
+	part({ Name = "Road", Size = Vector3.new(300, 0.2, 24), CFrame = CFrame.new(0, 0.1, 0), Color = sand, Material = Enum.Material.Sand, Parent = world })
+	for _, pos in ipairs(PLOT_POSITIONS) do
+		local zMid = pos.Z > 0 and 32 or -32
+		part({ Size = Vector3.new(10, 0.2, 40), CFrame = CFrame.new(pos.X, 0.1, zMid), Color = sand, Material = Enum.Material.Sand, Parent = world })
+	end
+	part({ Size = Vector3.new(12, 0.2, 58), CFrame = CFrame.new(0, 0.1, 41), Color = sand, Material = Enum.Material.Sand, Parent = world })
+
+	local spawn = Instance.new("SpawnLocation")
+	spawn.Anchored = true
+	spawn.Size = Vector3.new(10, 1, 10)
+	spawn.CFrame = CFrame.new(0, 0.5, 0)
+	spawn.Color = Color3.fromRGB(255, 230, 150)
+	spawn.Material = Enum.Material.Neon
+	spawn.Neutral = true
+	spawn.Duration = 0
+	spawn.Parent = world
+
+	local shops = Instance.new("Folder")
+	shops.Name = "Shops"
+	shops.Parent = world
+	makeStall(shops, Vector3.new(-125, 0, 0), "🐾 Cửa Hàng Pet", Color3.fromRGB(230, 120, 60), "PetShop", "Mua pet")
+	makeStall(shops, Vector3.new(-60, 0, 0), "🛠 Dụng Cụ", Color3.fromRGB(80, 140, 230), "GearShop", "Mua dụng cụ")
+	makeStall(shops, Vector3.new(-25, 0, 0), "🌱 Hạt Giống", Color3.fromRGB(80, 180, 80), "SeedShop", "Mua hạt giống")
+	makeStall(shops, Vector3.new(25, 0, 0), "🐟 Thủy Sản", Color3.fromRGB(40, 150, 200), "FishShop", "Mua con giống")
+	makeStall(shops, Vector3.new(60, 0, 0), "💰 Bán Hàng", Color3.fromRGB(230, 190, 50), "Sell", "Bán nông sản, thủy sản")
+
+	-- cây trang trí (tránh nông trại, nhà triển lãm và đường)
+	local function blocked(x, z)
+		if math.abs(z) < 16 then
+			return true
+		end
+		for _, pos in ipairs(PLOT_POSITIONS) do
+			if math.abs(x - pos.X) < 36 and math.abs(z - pos.Z) < 40 and math.sign(z) == math.sign(pos.Z) then
+				return true
+			end
+			if math.abs(x - pos.X) < 9 and math.abs(z) < 56 then
+				return true
+			end
+		end
+		return math.abs(x - HALL_POSITION.X) < 52 and z > 10
+	end
+	local rng = Random.new(42)
+	for _ = 1, 50 do
+		local x = rng:NextNumber(-200, 200)
+		local z = rng:NextNumber(-170, 170)
+		if not blocked(x, z) then
+			part({ Name = "Trunk", Size = Vector3.new(1.5, 8, 1.5), CFrame = CFrame.new(x, 4, z), Color = Color3.fromRGB(110, 75, 40), Material = Enum.Material.Wood, Parent = world })
+			part({ Name = "Leaves", Shape = Enum.PartType.Ball, Size = Vector3.new(8, 8, 8), CFrame = CFrame.new(x, 10, z), Color = Color3.fromRGB(60, 140, 60), Material = Enum.Material.Grass, Parent = world })
+		end
+	end
+
+	Lighting.ClockTime = 14
+	Lighting.Brightness = 2.5
+	Lighting.OutdoorAmbient = Color3.fromRGB(150, 150, 150)
+
+	local plotsFolder = Instance.new("Folder")
+	plotsFolder.Name = "Plots"
+	plotsFolder.Parent = world
+	local plots = {}
+	for i, pos in ipairs(PLOT_POSITIONS) do
+		plots[i] = buildPlot(plotsFolder, i, pos)
+	end
+	local sections = buildHall(world, #PLOT_POSITIONS)
+	return plots, sections
+end
+
+WorldBuilder.GRID_SIZE = GRID_COLS * GRID_ROWS
+
+return WorldBuilder
+]]></string>
+        </Properties>
+      </Item>
+    </Item>
+  </Item>
+  <Item class="StarterPlayer" referent="11">
+    <Properties>
+      <string name="Name">StarterPlayer</string>
+    </Properties>
+    <Item class="StarterPlayerScripts" referent="12">
+      <Properties>
+        <string name="Name">StarterPlayerScripts</string>
+      </Properties>
+      <Item class="Folder" referent="13">
+        <Properties>
+          <string name="Name">Client</string>
+        </Properties>
+        <Item class="LocalScript" referent="14">
+          <Properties>
+            <string name="Name">Client</string>
+            <string name="Source"><![CDATA[-- NÔNG TRẠI NGŨ HÀNH - Giao diện người chơi (hỗ trợ cả điện thoại)
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ProximityPromptService = game:GetService("ProximityPromptService")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared:WaitForChild("Config"))
+local PetUtil = require(Shared:WaitForChild("PetUtil"))
+local Remotes = ReplicatedStorage:WaitForChild("Remotes")
+local DataEvent = Remotes:WaitForChild("Data")
+local NotifyEvent = Remotes:WaitForChild("Notify")
+local Request = Remotes:WaitForChild("Request")
+
+local fmt = PetUtil.formatNumber
+
+local state = {
+	data = nil,
+	stock = {},
+	restockAt = 0,
+	selected = nil,
+	plotIndex = nil,
+	fuseA = nil,
+	fuseB = nil,
+}
+
+----------------------------------------------------------------
+-- TIỆN ÍCH GIAO DIỆN
+----------------------------------------------------------------
+local COLORS = {
+	bg = Color3.fromRGB(35, 30, 45),
+	panel = Color3.fromRGB(250, 243, 225),
+	row = Color3.fromRGB(255, 252, 242),
+	text = Color3.fromRGB(60, 45, 35),
+	sub = Color3.fromRGB(120, 100, 85),
+	green = Color3.fromRGB(80, 185, 90),
+	blue = Color3.fromRGB(70, 140, 230),
+	red = Color3.fromRGB(220, 75, 70),
+	gold = Color3.fromRGB(240, 185, 50),
+	gray = Color3.fromRGB(170, 165, 160),
+	purple = Color3.fromRGB(150, 90, 230),
+}
+
+local function new(class, props, children)
+	local inst = Instance.new(class)
+	for k, v in pairs(props or {}) do
+		if k ~= "Parent" then
+			(inst :: any)[k] = v
+		end
+	end
+	for _, child in ipairs(children or {}) do
+		child.Parent = inst
+	end
+	if props and props.Parent then
+		inst.Parent = props.Parent
+	end
+	return inst
+end
+
+local function corner(r)
+	return new("UICorner", { CornerRadius = UDim.new(0, r or 10) })
+end
+
+local function stroke(color, t)
+	return new("UIStroke", { Color = color or Color3.fromRGB(90, 65, 45), Thickness = t or 2, ApplyStrokeMode = Enum.ApplyStrokeMode.Border })
+end
+
+local function label(props)
+	props.BackgroundTransparency = props.BackgroundTransparency or 1
+	props.Font = props.Font or Enum.Font.GothamBold
+	props.TextColor3 = props.TextColor3 or COLORS.text
+	if props.TextScaled == nil then
+		props.TextScaled = false
+	end
+	props.TextSize = props.TextSize or 16
+	return new("TextLabel", props)
+end
+
+local function button(props, onClick)
+	props.Font = props.Font or Enum.Font.FredokaOne
+	props.TextColor3 = props.TextColor3 or Color3.new(1, 1, 1)
+	props.TextSize = props.TextSize or 16
+	props.AutoButtonColor = true
+	local b = new("TextButton", props, { corner(8) })
+	if onClick then
+		b.Activated:Connect(onClick)
+	end
+	return b
+end
+
+local gui = new("ScreenGui", {
+	Name = "FarmUI",
+	ResetOnSpawn = false,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+	Parent = player:WaitForChild("PlayerGui"),
+})
+
+----------------------------------------------------------------
+-- THÔNG BÁO
+----------------------------------------------------------------
+local toastHolder = new("Frame", {
+	BackgroundTransparency = 1,
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 60),
+	Size = UDim2.new(0.8, 0, 0, 200),
+	Parent = gui,
+}, {
+	new("UIListLayout", { HorizontalAlignment = Enum.HorizontalAlignment.Center, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }),
+	new("UISizeConstraint", { MaxSize = Vector2.new(460, 300) }),
+})
+
+local toastColors = { info = COLORS.blue, success = COLORS.green, error = COLORS.red, rare = COLORS.purple }
+local toastOrder = 0
+local function toast(text, kind)
+	if not text or text == "" then
+		return
+	end
+	toastOrder += 1
+	local t = label({
+		Text = text,
+		TextColor3 = Color3.new(1, 1, 1),
+		TextWrapped = true,
+		TextSize = 15,
+		BackgroundTransparency = 0.1,
+		BackgroundColor3 = toastColors[kind or "info"] or COLORS.blue,
+		Size = UDim2.new(1, 0, 0, 36),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = toastOrder,
+		Parent = toastHolder,
+	})
+	corner(10).Parent = t
+	new("UIPadding", { PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10), PaddingTop = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6), Parent = t })
+	local children = toastHolder:GetChildren()
+	local count = 0
+	for _, c in ipairs(children) do
+		if c:IsA("TextLabel") then
+			count += 1
+		end
+	end
+	if count > 4 then
+		for _, c in ipairs(children) do
+			if c:IsA("TextLabel") and c ~= t then
+				c:Destroy()
+				break
+			end
+		end
+	end
+	task.delay(3, function()
+		if t.Parent then
+			TweenService:Create(t, TweenInfo.new(0.4), { BackgroundTransparency = 1, TextTransparency = 1 }):Play()
+			task.wait(0.45)
+			t:Destroy()
+		end
+	end)
+end
+
+NotifyEvent.OnClientEvent:Connect(toast)
+
+local function call(action, ...)
+	local ok, success, msg = pcall(function(...)
+		return Request:InvokeServer(action, ...)
+	end, ...)
+	if not ok then
+		toast("Mất kết nối máy chủ", "error")
+		return false
+	end
+	if msg then
+		toast(msg, success and "success" or "error")
+	end
+	return success
+end
+
+----------------------------------------------------------------
+-- HUD: TIỀN + NÚT BÊN
+----------------------------------------------------------------
+local coinLabel = label({
+	Text = "💰 0",
+	TextSize = 20,
+	TextColor3 = Color3.fromRGB(255, 225, 90),
+	Font = Enum.Font.FredokaOne,
+	BackgroundTransparency = 0.25,
+	BackgroundColor3 = COLORS.bg,
+	Position = UDim2.new(0, 10, 0, 10),
+	Size = UDim2.fromOffset(150, 38),
+	Parent = gui,
+})
+corner(10).Parent = coinLabel
+
+local luckLabel = label({
+	Text = "",
+	TextSize = 14,
+	TextColor3 = Color3.fromRGB(150, 255, 160),
+	Font = Enum.Font.GothamBold,
+	Position = UDim2.new(0, 10, 0, 52),
+	Size = UDim2.fromOffset(200, 20),
+	TextXAlignment = Enum.TextXAlignment.Left,
+	Parent = gui,
+})
+
+local sideBar = new("Frame", {
+	BackgroundTransparency = 1,
+	AnchorPoint = Vector2.new(1, 0.5),
+	Position = UDim2.new(1, -10, 0.42, 0),
+	Size = UDim2.fromOffset(64, 290),
+	Parent = gui,
+}, {
+	new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder }),
+})
+
+----------------------------------------------------------------
+-- BẢNG (PANEL) DÙNG CHUNG
+----------------------------------------------------------------
+local panel = new("Frame", {
+	Visible = false,
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.5),
+	Size = UDim2.fromScale(0.9, 0.78),
+	BackgroundColor3 = COLORS.panel,
+	Parent = gui,
+}, {
+	corner(16),
+	stroke(Color3.fromRGB(110, 75, 45), 3),
+	new("UISizeConstraint", { MaxSize = Vector2.new(560, 480) }),
+})
+
+local panelTitle = label({
+	Text = "",
+	Font = Enum.Font.FredokaOne,
+	TextSize = 22,
+	Position = UDim2.new(0, 16, 0, 8),
+	Size = UDim2.new(1, -70, 0, 34),
+	TextXAlignment = Enum.TextXAlignment.Left,
+	Parent = panel,
+})
+
+local panelInfo = label({
+	Text = "",
+	Font = Enum.Font.Gotham,
+	TextSize = 13,
+	TextColor3 = COLORS.sub,
+	Position = UDim2.new(0, 16, 0, 40),
+	Size = UDim2.new(1, -32, 0, 18),
+	TextXAlignment = Enum.TextXAlignment.Left,
+	TextTruncate = Enum.TextTruncate.AtEnd,
+	Parent = panel,
+})
+
+local content = new("ScrollingFrame", {
+	BackgroundTransparency = 1,
+	Position = UDim2.new(0, 10, 0, 64),
+	Size = UDim2.new(1, -20, 1, -74),
+	CanvasSize = UDim2.new(),
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+	ScrollBarThickness = 6,
+	BorderSizePixel = 0,
+	Parent = panel,
+}, {
+	new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }),
+	new("UIPadding", { PaddingRight = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8) }),
+})
+
+local currentPanel = nil
+local Renderers = {}
+
+local function closePanel()
+	currentPanel = nil
+	panel.Visible = false
+end
+
+button({
+	Text = "✕",
+	TextSize = 20,
+	BackgroundColor3 = COLORS.red,
+	AnchorPoint = Vector2.new(1, 0),
+	Position = UDim2.new(1, -10, 0, 10),
+	Size = UDim2.fromOffset(40, 36),
+	Parent = panel,
+}, closePanel)
+
+local order = 0
+local function nextOrder()
+	order += 1
+	return order
+end
+
+local function clearContent()
+	for _, c in ipairs(content:GetChildren()) do
+		if not c:IsA("UIListLayout") and not c:IsA("UIPadding") then
+			c:Destroy()
+		end
+	end
+	order = 0
+end
+
+local function header(text)
+	label({
+		Text = text,
+		Font = Enum.Font.FredokaOne,
+		TextSize = 17,
+		TextColor3 = Color3.fromRGB(150, 90, 40),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, 0, 0, 26),
+		LayoutOrder = nextOrder(),
+		Parent = content,
+	})
+end
+
+local function note(text)
+	label({
+		Text = text,
+		Font = Enum.Font.Gotham,
+		TextSize = 13,
+		TextColor3 = COLORS.sub,
+		TextWrapped = true,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Size = UDim2.new(1, 0, 0, 18),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = nextOrder(),
+		Parent = content,
+	})
+end
+
+-- Một dòng: ô màu | tiêu đề + mô tả | các nút
+-- buttons = { { text, color, onClick, disabled }, ... }
+local function row(title, sub, swatch, buttons, titleColor)
+	buttons = buttons or {}
+	local btnWidth = 78
+	local frame = new("Frame", {
+		BackgroundColor3 = COLORS.row,
+		Size = UDim2.new(1, 0, 0, 62),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = nextOrder(),
+		Parent = content,
+	}, { corner(10), stroke(Color3.fromRGB(225, 205, 170), 1) })
+	local sw = new("Frame", {
+		BackgroundColor3 = swatch or COLORS.gray,
+		Position = UDim2.new(0, 8, 0, 9),
+		Size = UDim2.fromOffset(44, 44),
+		Parent = frame,
+	}, { corner(22), stroke(Color3.new(1, 1, 1), 2) })
+	sw.Name = "Swatch"
+	local textArea = new("Frame", {
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0, 60, 0, 6),
+		Size = UDim2.new(1, -(68 + #buttons * (btnWidth + 6)), 0, 50),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		Parent = frame,
+	}, {
+		new("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2) }),
+		new("UIPadding", { PaddingBottom = UDim.new(0, 6) }),
+	})
+	label({
+		Text = title,
+		TextSize = 16,
+		Font = Enum.Font.FredokaOne,
+		TextColor3 = titleColor or COLORS.text,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextWrapped = true,
+		Size = UDim2.new(1, 0, 0, 20),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = 1,
+		Parent = textArea,
+	})
+	if sub and sub ~= "" then
+		label({
+			Text = sub,
+			TextSize = 12,
+			Font = Enum.Font.Gotham,
+			TextColor3 = COLORS.sub,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextWrapped = true,
+			Size = UDim2.new(1, 0, 0, 14),
+			AutomaticSize = Enum.AutomaticSize.Y,
+			LayoutOrder = 2,
+			Parent = textArea,
+		})
+	end
+	for i, info in ipairs(buttons) do
+		local disabled = info[4]
+		button({
+			Text = info[1],
+			TextSize = 14,
+			BackgroundColor3 = disabled and COLORS.gray or (info[2] or COLORS.green),
+			AnchorPoint = Vector2.new(1, 0.5),
+			Position = UDim2.new(1, -8 - (i - 1) * (btnWidth + 6), 0.5, 0),
+			Size = UDim2.fromOffset(btnWidth, 38),
+			Parent = frame,
+		}, function()
+			if not disabled and info[3] then
+				info[3]()
+			end
+		end)
+	end
+	return frame
+end
+
+local function render()
+	if not currentPanel or not state.data then
+		return
+	end
+	local scroll = content.CanvasPosition
+	clearContent()
+	Renderers[currentPanel]()
+	task.defer(function()
+		content.CanvasPosition = scroll
+	end)
+end
+
+local function openPanel(name)
+	if currentPanel == name then
+		closePanel()
+		return
+	end
+	currentPanel = name
+	panel.Visible = true
+	content.CanvasPosition = Vector2.zero
+	render()
+end
+
+----------------------------------------------------------------
+-- CÁC BẢNG
+----------------------------------------------------------------
+local function buffsText(pet)
+	return table.concat(PetUtil.buffLines(PetUtil.getBuffs(pet)), "\n")
+end
+
+local function sortedPetIds(data)
+	local ids = {}
+	for id in pairs(data.pets) do
+		table.insert(ids, id)
+	end
+	table.sort(ids, function(a, b)
+		local pa, pb = data.pets[a], data.pets[b]
+		if pa.tier ~= pb.tier then
+			return pa.tier > pb.tier
+		end
+		return #pa.els > #pb.els
+	end)
+	return ids
+end
+
+local function isExhibited(data, id)
+	for i = 1, Config.ExhibitSlots do
+		local item = data.exhibit["s" .. i]
+		if item and item.kind == "pet" and item.id == id then
+			return true
+		end
+	end
+	return false
+end
+
+local function sortedCropKeys(data)
+	local keys = {}
+	for key in pairs(data.crops) do
+		table.insert(keys, key)
+	end
+	table.sort(keys, function(a, b)
+		return PetUtil.cropValue(a) > PetUtil.cropValue(b)
+	end)
+	return keys
+end
+
+local function cropColor(key)
+	local seedKey, mutKey = string.match(key, "^([^|]+)|(.+)$")
+	for _, m in ipairs(Config.Mutations) do
+		if m.key == mutKey and m.color then
+			return m.color
+		end
+	end
+	local info = PetUtil.produceInfo(seedKey or "")
+	return info and info.color or COLORS.gray
+end
+
+Renderers.FishShop = function()
+	local data = state.data
+	panelTitle.Text = "🐟 Cửa Hàng Thủy Sản"
+	note("Mua con giống, chọn ở thanh dưới rồi chạm vào ao trong nông trại để thả. Mỗi ao cho nhiều con khi thu hoạch. Hàng mới mỗi " .. math.floor(Config.RestockSeconds / 60) .. " phút.")
+	for _, key in ipairs(Config.FishOrder) do
+		local f = Config.Fish[key]
+		local stock = state.stock[key] or 0
+		local sub = string.format(
+			"Giá %s xu • Nuôi %s • Thu %d-%d con, %s xu/con\nCòn hàng: %d • Bạn có: %d",
+			fmt(f.price), PetUtil.formatTime(f.grow), f.yield[1], f.yield[2], fmt(f.sell), stock, data.fry[key] or 0
+		)
+		row(f.name, sub, f.color, {
+			{ "Mua", COLORS.green, function() call("BuyFry", key) end, stock <= 0 or data.coins < f.price },
+		})
+	end
+	note("Mẹo: Thức Ăn Cá (quầy Dụng Cụ) rút ngắn thời gian nuôi và thêm 1 con mỗi lần cho ăn (tối đa 3). Pet hệ Thủy giúp thủy sản lớn nhanh hơn.")
+end
+
+Renderers.SeedShop = function()
+	local data = state.data
+	panelTitle.Text = "🌱 Cửa Hàng Hạt Giống"
+	note("Hàng mới mỗi " .. math.floor(Config.RestockSeconds / 60) .. " phút. Hạt hiếm không phải lúc nào cũng có!")
+	for _, key in ipairs(Config.SeedOrder) do
+		local s = Config.Seeds[key]
+		local stock = state.stock[key] or 0
+		local sub = string.format("Giá %s xu • Lớn %s • Bán %s xu\nCòn hàng: %d • Bạn có: %d", fmt(s.price), PetUtil.formatTime(s.grow), fmt(s.sell), stock, data.seeds[key] or 0)
+		row(s.name, sub, s.color, {
+			{ "Mua", COLORS.green, function() call("BuySeed", key) end, stock <= 0 or data.coins < s.price },
+		})
+	end
+end
+
+Renderers.GearShop = function()
+	local data = state.data
+	panelTitle.Text = "🛠 Cửa Hàng Dụng Cụ"
+	note("Dụng cụ chọn được (Bình tưới, Phân bón, Xẻng, Thức ăn cá) sẽ hiện ở thanh dưới màn hình.")
+	for _, key in ipairs(Config.GearOrder) do
+		local g = Config.Gear[key]
+		local owned = data.gear[key] or 0
+		local sub = string.format("%s\nGiá %s xu • Bạn có: %d", g.desc, fmt(g.price), owned)
+		local disabled = data.coins < g.price or (g.reusable and owned > 0)
+		row(g.name, sub, g.color, {
+			{ "Mua", COLORS.green, function() call("BuyGear", key) end, disabled },
+		})
+	end
+end
+
+Renderers.PetShop = function()
+	local data = state.data
+	panelTitle.Text = "🐾 Cửa Hàng Pet"
+	note("Pet cơ bản bậc Thường. Hợp thể 2 pet (cần Mảnh Hợp Thể) để lên bậc hoặc tạo pet đa hệ!")
+	for _, e in ipairs(Config.ElementOrder) do
+		local el = Config.Elements[e]
+		local sub = string.format("Hệ %s • +%d%% %s\nGiá %s xu", el.name, math.floor(el.buffBase * 100 + 0.5), el.buffText, fmt(Config.BasicPetPrice))
+		row(el.petName, sub, el.color, {
+			{ "Mua", COLORS.green, function() call("BuyPet", e) end, data.coins < Config.BasicPetPrice },
+		})
+	end
+	header("☯ Ngũ hành")
+	note("Tương sinh: Mộc → Hỏa → Thổ → Kim → Thủy → Mộc. Hợp thể 2 pet tương sinh: pet mới mạnh thêm 25%.")
+	note("Tương khắc: Mộc ✕ Thổ, Thổ ✕ Thủy, Thủy ✕ Hỏa, Hỏa ✕ Kim, Kim ✕ Mộc. Hợp thể tương khắc chỉ thành công 70%.")
+end
+
+Renderers.Sell = function()
+	local data = state.data
+	panelTitle.Text = "💰 Bán Nông Sản & Thủy Sản"
+	local buffs = PetUtil.totalBuffs(data)
+	local keys = sortedCropKeys(data)
+	local total = 0
+	for _, key in ipairs(keys) do
+		total += math.floor(PetUtil.cropValue(key) * (1 + buffs.Kim)) * data.crops[key]
+	end
+	if buffs.Kim > 0 then
+		note(string.format("Pet hệ Kim đang tăng giá bán +%d%%", math.floor(buffs.Kim * 100 + 0.5)))
+	end
+	row("Bán tất cả", "Tổng: " .. fmt(total) .. " xu", COLORS.gold, {
+		{ "Bán hết", COLORS.gold, function() call("SellAll") end, #keys == 0 },
+	})
+	if #keys == 0 then
+		note("Túi trống. Hãy trồng và thu hoạch nông sản!")
+	end
+	for _, key in ipairs(keys) do
+		local each = math.floor(PetUtil.cropValue(key) * (1 + buffs.Kim))
+		row(PetUtil.cropName(key) .. " x" .. data.crops[key], fmt(each) .. " xu / cái", cropColor(key), {
+			{ "Bán", COLORS.green, function() call("SellCrop", key) end },
+		})
+	end
+end
+
+Renderers.Bag = function()
+	local data = state.data
+	panelTitle.Text = "🎒 Túi Đồ"
+	local buffs = PetUtil.totalBuffs(data)
+	header("Buff từ pet đang trang bị")
+	local lines = PetUtil.buffLines(buffs)
+	note(#lines > 0 and table.concat(lines, "\n") or "Chưa có buff. Hãy trang bị pet!")
+
+	header("Dụng cụ")
+	local any = false
+	for _, key in ipairs(Config.GearOrder) do
+		local n = data.gear[key] or 0
+		if n > 0 then
+			any = true
+			local g = Config.Gear[key]
+			local btns = {}
+			if key == "BuaMayMan" then
+				btns = { { "Dùng", COLORS.green, function() call("UseLuck") end } }
+			end
+			row(g.name .. " x" .. n, g.desc, g.color, btns)
+		end
+	end
+	if not any then
+		note("Chưa có dụng cụ.")
+	end
+
+	header("Hạt giống")
+	any = false
+	for _, key in ipairs(Config.SeedOrder) do
+		local n = data.seeds[key] or 0
+		if n > 0 then
+			any = true
+			row(Config.Seeds[key].name .. " x" .. n, "Chọn ở thanh dưới rồi chạm ô đất để trồng", Config.Seeds[key].color)
+		end
+	end
+	if not any then
+		note("Hết hạt giống. Mua thêm ở quầy Hạt Giống!")
+	end
+
+	header("Con giống thủy sản")
+	any = false
+	for _, key in ipairs(Config.FishOrder) do
+		local n = (data.fry or {})[key] or 0
+		if n > 0 then
+			any = true
+			row(Config.Fish[key].name .. " x" .. n, "Chọn ở thanh dưới rồi chạm vào ao để thả", Config.Fish[key].color)
+		end
+	end
+	if not any then
+		note("Chưa có con giống. Mua ở quầy 🐟 Thủy Sản!")
+	end
+
+	header("Nông sản & thủy sản")
+	local keys = sortedCropKeys(data)
+	for _, key in ipairs(keys) do
+		row(PetUtil.cropName(key) .. " x" .. data.crops[key], "Giá gốc " .. fmt(PetUtil.cropValue(key)) .. " xu", cropColor(key))
+	end
+	if #keys == 0 then
+		note("Chưa có nông sản.")
+	end
+end
+
+Renderers.Pets = function()
+	local data = state.data
+	panelTitle.Text = "🐾 Pet Của Bạn"
+	local ids = sortedPetIds(data)
+	-- kiểm tra lựa chọn hợp thể còn hợp lệ
+	if state.fuseA and not data.pets[state.fuseA] then
+		state.fuseA = nil
+	end
+	if state.fuseB and not data.pets[state.fuseB] then
+		state.fuseB = nil
+	end
+
+	header("⚗ Hợp thể pet")
+	local a, b = data.pets[state.fuseA or ""], data.pets[state.fuseB or ""]
+	local nameA = a and (PetUtil.petName(a) .. " [" .. PetUtil.tierInfo(a.tier).name .. "]") or "(trống)"
+	local nameB = b and (PetUtil.petName(b) .. " [" .. PetUtil.tierInfo(b.tier).name .. "]") or "(trống)"
+	local preview, reason = PetUtil.previewFusion(a, b)
+	local shards = data.gear.ManhHopThe or 0
+	local sub
+	local canFuse = false
+	if preview then
+		local fake = { els = preview.els, tier = preview.tier, syn = preview.syn }
+		local relation = preview.sinh and "☯ Tương sinh (+25%)" or (preview.khac and "⚠ Tương khắc (70% thành công)" or "Bình thường")
+		sub = string.format(
+			"→ %s [%s]\n%s\n%s\nCần %d Mảnh Hợp Thể (có %d) • %s",
+			PetUtil.petName(fake),
+			PetUtil.tierInfo(preview.tier).name,
+			PetUtil.elementText(preview.els),
+			buffsText(fake),
+			preview.shardCost,
+			shards,
+			relation
+		)
+		canFuse = shards >= preview.shardCost
+	else
+		sub = (reason or "") .. " • Bấm \"Chọn\" ở 2 pet bên dưới. Mảnh hợp thể: " .. shards
+	end
+	local fuseRow = row(nameA .. "  +  " .. nameB, sub, preview and Config.Elements[preview.els[1]].color or COLORS.purple, {
+		{ "Hợp thể", COLORS.purple, function()
+			if call("Fuse", state.fuseA, state.fuseB) then
+				state.fuseA, state.fuseB = nil, nil
+				render()
+			end
+		end, not canFuse },
+		{ "Bỏ chọn", COLORS.gray, function()
+			state.fuseA, state.fuseB = nil, nil
+			render()
+		end },
+	})
+	fuseRow.BackgroundColor3 = Color3.fromRGB(245, 235, 255)
+	note("Cùng hệ → lên 1 bậc. Khác hệ → pet đa hệ giữ bậc cao nhất. Gom đủ 5 hệ để có Ngũ Hành Thần Thú!")
+
+	header(string.format("Danh sách pet (trang bị %d/%d)", #data.equipped, Config.MaxEquippedPets))
+	if #ids == 0 then
+		note("Bạn chưa có pet. Ghé Cửa Hàng Pet nhé!")
+	end
+	for _, id in ipairs(ids) do
+		local pet = data.pets[id]
+		local tier = PetUtil.tierInfo(pet.tier)
+		local equipped = table.find(data.equipped, id) ~= nil
+		local exhibited = isExhibited(data, id)
+		local status = equipped and " ✅ Đang theo" or (exhibited and " 🏛 Trưng bày" or "")
+		local title = PetUtil.petName(pet) .. " [" .. tier.name .. "]" .. (pet.syn and " ☯" or "") .. status
+		local petSub = "Hệ: " .. PetUtil.elementText(pet.els) .. "\n" .. buffsText(pet)
+		local picked = state.fuseA == id or state.fuseB == id
+		local btns = {
+			equipped and { "Gỡ", COLORS.red, function() call("Unequip", id) end }
+				or { "Trang bị", COLORS.green, function() call("Equip", id) end, exhibited or #data.equipped >= Config.MaxEquippedPets },
+			{ picked and "Đã chọn" or "Chọn", COLORS.purple, function()
+				if picked then
+					if state.fuseA == id then
+						state.fuseA = nil
+					else
+						state.fuseB = nil
+					end
+				elseif not state.fuseA then
+					state.fuseA = id
+				elseif not state.fuseB then
+					state.fuseB = id
+				else
+					state.fuseB = id
+				end
+				render()
+			end, equipped or exhibited },
+		}
+		local r = row(title, petSub, Config.Elements[pet.els[1]].color, btns, tier.color:Lerp(Color3.new(0, 0, 0), 0.25))
+		if picked then
+			r.BackgroundColor3 = Color3.fromRGB(235, 220, 255)
+		end
+	end
+end
+
+Renderers.Exhibit = function()
+	local data = state.data
+	panelTitle.Text = "🏛 Khu Của Bạn - Nhà Triển Lãm Chung"
+	local income = 0
+	for i = 1, Config.ExhibitSlots do
+		local item = data.exhibit["s" .. i]
+		if item and item.kind == "pet" and data.pets[item.id] then
+			income += PetUtil.petExhibitValue(data.pets[item.id])
+		elseif item and item.kind == "crop" then
+			income += PetUtil.cropExhibitValue(item.key)
+		end
+	end
+	note(string.format("Nhà triển lãm nằm ở giữa map, mỗi người có 1 khu %d bục (khu số %s). Thu nhập: +%s xu / phút • ❤ %s lượt thích. Người khác bấm Thích khu của bạn sẽ tặng xu!", Config.ExhibitSlots, tostring(state.plotIndex or "?"), fmt(income), fmt(data.likes)))
+
+	header("Bục trưng bày")
+	for i = 1, Config.ExhibitSlots do
+		local item = data.exhibit["s" .. i]
+		if item and item.kind == "pet" and data.pets[item.id] then
+			local pet = data.pets[item.id]
+			row("Bục " .. i .. ": " .. PetUtil.petName(pet) .. " [" .. PetUtil.tierInfo(pet.tier).name .. "]", "+" .. PetUtil.petExhibitValue(pet) .. " xu / phút", Config.Elements[pet.els[1]].color, {
+				{ "Gỡ", COLORS.red, function() call("Unexhibit", i) end },
+			})
+		elseif item and item.kind == "crop" then
+			row("Bục " .. i .. ": " .. PetUtil.cropName(item.key), "+" .. PetUtil.cropExhibitValue(item.key) .. " xu / phút", cropColor(item.key), {
+				{ "Gỡ", COLORS.red, function() call("Unexhibit", i) end },
+			})
+		else
+			row("Bục " .. i .. ": (trống)", "Chọn vật phẩm bên dưới để trưng bày", Color3.fromRGB(230, 220, 200))
+		end
+	end
+
+	header("Pet có thể trưng bày")
+	local anyPet = false
+	for _, id in ipairs(sortedPetIds(data)) do
+		local pet = data.pets[id]
+		if not table.find(data.equipped, id) and not isExhibited(data, id) then
+			anyPet = true
+			row(PetUtil.petName(pet) .. " [" .. PetUtil.tierInfo(pet.tier).name .. "]", "+" .. PetUtil.petExhibitValue(pet) .. " xu / phút", Config.Elements[pet.els[1]].color, {
+				{ "Trưng bày", COLORS.blue, function() call("Exhibit", "pet", id) end },
+			})
+		end
+	end
+	if not anyPet then
+		note("Không có pet rảnh (gỡ trang bị pet để trưng bày).")
+	end
+
+	header("Nông sản có thể trưng bày")
+	local keys = sortedCropKeys(data)
+	for _, key in ipairs(keys) do
+		row(PetUtil.cropName(key) .. " x" .. data.crops[key], "+" .. PetUtil.cropExhibitValue(key) .. " xu / phút", cropColor(key), {
+			{ "Trưng bày", COLORS.blue, function() call("Exhibit", "crop", key) end },
+		})
+	end
+	if #keys == 0 then
+		note("Chưa có nông sản. Nông sản đột biến (Vàng, Cầu Vồng) cho thu nhập cao!")
+	end
+end
+
+----------------------------------------------------------------
+-- NÚT BÊN PHẢI
+----------------------------------------------------------------
+local function sideButton(text, color, panelName, layout)
+	button({
+		Text = text,
+		TextSize = 13,
+		TextWrapped = true,
+		BackgroundColor3 = color,
+		Size = UDim2.fromOffset(64, 64),
+		LayoutOrder = layout,
+		Parent = sideBar,
+	}, function()
+		openPanel(panelName)
+	end)
+end
+sideButton("🐾\nPet", COLORS.purple, "Pets", 1)
+sideButton("🎒\nTúi", COLORS.blue, "Bag", 2)
+sideButton("🏛\nTriển lãm", COLORS.gold, "Exhibit", 3)
+
+----------------------------------------------------------------
+-- HƯỚNG DẪN TÂN THỦ
+----------------------------------------------------------------
+local Tutorial = require(script.Parent:WaitForChild("Tutorial"))
+Tutorial.init({
+	gui = gui,
+	request = Request,
+	getState = function()
+		return state
+	end,
+})
+button({
+	Text = "❓\nHướng dẫn",
+	TextSize = 12,
+	TextWrapped = true,
+	BackgroundColor3 = COLORS.green,
+	Size = UDim2.fromOffset(64, 64),
+	LayoutOrder = 4,
+	Parent = sideBar,
+}, function()
+	closePanel()
+	Tutorial.restart()
+end)
+
+----------------------------------------------------------------
+-- THANH CÔNG CỤ (HOTBAR)
+----------------------------------------------------------------
+local hotbar = new("ScrollingFrame", {
+	AnchorPoint = Vector2.new(0.5, 1),
+	Position = UDim2.new(0.5, 0, 1, -12),
+	Size = UDim2.new(0.56, 0, 0, 76),
+	BackgroundColor3 = COLORS.bg,
+	BackgroundTransparency = 0.3,
+	ScrollingDirection = Enum.ScrollingDirection.X,
+	AutomaticCanvasSize = Enum.AutomaticSize.X,
+	CanvasSize = UDim2.new(),
+	ScrollBarThickness = 4,
+	BorderSizePixel = 0,
+	Parent = gui,
+}, {
+	corner(12),
+	new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Center }),
+	new("UIPadding", { PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6) }),
+	new("UISizeConstraint", { MaxSize = Vector2.new(620, 76) }),
+})
+
+local hint = label({
+	Text = "",
+	TextSize = 13,
+	TextColor3 = Color3.new(1, 1, 1),
+	TextStrokeTransparency = 0.4,
+	AnchorPoint = Vector2.new(0.5, 1),
+	Position = UDim2.new(0.5, 0, 1, -92),
+	Size = UDim2.new(0.8, 0, 0, 18),
+	Parent = gui,
+})
+
+local function renderHotbar()
+	for _, c in ipairs(hotbar:GetChildren()) do
+		if c:IsA("TextButton") then
+			c:Destroy()
+		end
+	end
+	local data = state.data
+	if not data then
+		return
+	end
+	local items = {}
+	for _, key in ipairs(Config.SeedOrder) do
+		if (data.seeds[key] or 0) > 0 then
+			table.insert(items, { kind = "seed", key = key, name = Config.Seeds[key].name, count = data.seeds[key], color = Config.Seeds[key].color })
+		end
+	end
+	for _, key in ipairs(Config.FishOrder) do
+		if ((data.fry or {})[key] or 0) > 0 then
+			table.insert(items, { kind = "fry", key = key, name = Config.Fish[key].name, count = data.fry[key], color = Config.Fish[key].color })
+		end
+	end
+	for _, key in ipairs(Config.GearOrder) do
+		local g = Config.Gear[key]
+		if g.selectable and (data.gear[key] or 0) > 0 then
+			table.insert(items, { kind = "gear", key = key, name = g.name, count = data.gear[key], color = g.color, reusable = g.reusable })
+		end
+	end
+	for i, it in ipairs(items) do
+		local isSel = state.selected and state.selected.kind == it.kind and state.selected.key == it.key
+		local b = button({
+			Text = "",
+			BackgroundColor3 = isSel and Color3.fromRGB(255, 230, 120) or COLORS.panel,
+			Size = UDim2.fromOffset(64, 64),
+			LayoutOrder = i,
+			Parent = hotbar,
+		}, function()
+			if isSel then
+				call("Select", nil)
+			else
+				call("Select", it.kind, it.key)
+			end
+		end)
+		new("Frame", { BackgroundColor3 = it.color, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 6), Size = UDim2.fromOffset(24, 24), Parent = b }, { corner(12) })
+		label({ Text = it.name, TextSize = 11, TextWrapped = true, Font = Enum.Font.GothamBold, Position = UDim2.new(0, 2, 0, 30), Size = UDim2.new(1, -4, 0, 22), Parent = b })
+		if not it.reusable then
+			label({ Text = "x" .. it.count, TextSize = 11, Font = Enum.Font.GothamBlack, TextColor3 = COLORS.red, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -4, 0, 2), Size = UDim2.fromOffset(30, 14), TextXAlignment = Enum.TextXAlignment.Right, Parent = b })
+		end
+		if isSel then
+			stroke(COLORS.gold, 3).Parent = b
+		end
+	end
+	if #items == 0 then
+		hint.Text = "Hết hạt giống & con giống! Ghé quầy 🌱 Hạt Giống hoặc 🐟 Thủy Sản"
+	elseif state.selected then
+		local sel = state.selected
+		local name
+		if sel.kind == "seed" then
+			name = Config.Seeds[sel.key].name
+			hint.Text = "Đang cầm: " .. name .. " — chạm vào ô đất trong nông trại của bạn"
+		elseif sel.kind == "fry" then
+			name = Config.Fish[sel.key].name
+			hint.Text = "Đang cầm: " .. name .. " — chạm vào ao trống để thả"
+		else
+			name = Config.Gear[sel.key].name
+			hint.Text = "Đang cầm: " .. name .. " — chạm vào cây hoặc ao của bạn"
+		end
+	else
+		hint.Text = "Chọn hạt/con giống bên dưới rồi chạm ô đất/ao • Chạm khi chín để thu hoạch"
+	end
+end
+
+----------------------------------------------------------------
+-- MỞ QUẦY HÀNG KHI KÍCH HOẠT PROXIMITYPROMPT
+----------------------------------------------------------------
+ProximityPromptService.PromptTriggered:Connect(function(prompt)
+	local name = prompt:GetAttribute("Panel")
+	if name and Renderers[name] then
+		if currentPanel ~= name then
+			openPanel(name)
+		end
+	end
+end)
+
+----------------------------------------------------------------
+-- NHẬN DỮ LIỆU
+----------------------------------------------------------------
+DataEvent.OnClientEvent:Connect(function(payload)
+	state.data = payload.data
+	state.stock = payload.stock or {}
+	state.restockAt = payload.restockAt or 0
+	state.selected = payload.selected
+	state.plotIndex = payload.plotIndex
+	coinLabel.Text = "💰 " .. fmt(state.data.coins)
+	renderHotbar()
+	render()
+	Tutorial.onData(state.data)
+end)
+
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+		local data = state.data
+		if data then
+			local luckLeft = (data.luckUntil or 0) - os.time()
+			luckLabel.Text = luckLeft > 0 and ("🍀 May mắn x2: " .. PetUtil.formatTime(luckLeft)) or ""
+			if currentPanel == "SeedShop" then
+				panelInfo.Text = "⏱ Nhập hàng mới sau " .. PetUtil.formatTime(state.restockAt - os.time())
+			elseif currentPanel then
+				panelInfo.Text = "💰 " .. fmt(data.coins) .. " xu"
+			end
+		end
+	end
+end)
+
+-- yêu cầu dữ liệu ban đầu
+task.spawn(function()
+	for _ = 1, 10 do
+		if state.data then
+			break
+		end
+		pcall(function()
+			Request:InvokeServer("Hello")
+		end)
+		task.wait(2)
+	end
+end)
+
+toast("Chào mừng đến Nông Trại Ngũ Hành! 🌾", "rare")
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="15">
+          <Properties>
+            <string name="Name">Tutorial</string>
+            <string name="Source"><![CDATA[-- HƯỚNG DẪN TÂN THỦ
+-- Khung chỉ dẫn từng bước + tia sáng chỉ đường tới đúng chỗ cần đến.
+-- Bước có điều kiện sẽ tự chuyển khi người chơi làm xong.
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+
+local Tutorial = {}
+
+local ctx -- { gui, request, getState }
+local step = nil -- bước hiện tại (nil = chưa tải, 0 = đã xong)
+local stepStart = {} -- số liệu lúc bắt đầu bước (để so sánh)
+local ui: any = {}
+local guide: any = {}
+
+----------------------------------------------------------------
+-- TÌM VỊ TRÍ TRONG MAP
+----------------------------------------------------------------
+local function world()
+	return workspace:FindFirstChild("World")
+end
+
+local function findPath(...)
+	local node = world()
+	for _, name in ipairs({ ... }) do
+		if not node then
+			return nil
+		end
+		node = node:FindFirstChild(name)
+	end
+	return node
+end
+
+local function myPlot()
+	local s = ctx.getState()
+	if not s.plotIndex then
+		return nil
+	end
+	return findPath("Plots", "Plot" .. s.plotIndex)
+end
+
+local function plotPart(...)
+	local plot = myPlot()
+	local node = plot
+	for _, name in ipairs({ ... }) do
+		node = node and node:FindFirstChild(name)
+	end
+	return node
+end
+
+local function shopCounter(panelName)
+	return findPath("Shops", panelName, "Counter")
+end
+
+local function firstKey(t)
+	for k in pairs(t or {}) do
+		return k
+	end
+	return nil
+end
+
+local function total(t)
+	local n = 0
+	for _, v in pairs(t or {}) do
+		n += v
+	end
+	return n
+end
+
+----------------------------------------------------------------
+-- CÁC BƯỚC
+-- cond(data) trả về true khi bước đã hoàn thành; không có cond = bấm nút "Tiếp"
+----------------------------------------------------------------
+local STEPS = {
+	{
+		title = "🌾 Chào mừng đến Nông Trại Ngũ Hành!",
+		text = "Đây là nông trại của riêng bạn: 24 ô đất để trồng cây và 4 ao để nuôi cá. Mình sẽ hướng dẫn bạn vài bước đầu tiên nhé!",
+		button = "Bắt đầu",
+		target = function()
+			return plotPart("OwnerSign")
+		end,
+	},
+	{
+		title = "🌱 Trồng cây đầu tiên",
+		text = "Bấm vào Cà Rốt ở thanh bên dưới màn hình, rồi chạm vào một ô đất nâu trong nông trại để gieo hạt.",
+		target = function()
+			return plotPart("Tiles", "Tile1", "Soil")
+		end,
+		cond = function(data)
+			return next(data.plots) ~= nil or next(data.crops) ~= nil
+		end,
+	},
+	{
+		title = "⏳ Chờ cây lớn rồi thu hoạch",
+		text = "Cây cần một lúc để lớn (xem đồng hồ trên đầu cây). Khi hiện \"Sẵn sàng!\" thì chạm vào cây để thu hoạch.",
+		target = function(data)
+			local key = firstKey(data.plots)
+			local idx = key and string.match(key, "%d+") or "1"
+			return plotPart("Tiles", "Tile" .. idx, "Soil")
+		end,
+		cond = function(data)
+			return next(data.crops) ~= nil
+		end,
+	},
+	{
+		title = "💰 Bán nông sản",
+		text = "Đi theo tia sáng tới quầy 💰 Bán Hàng trên đường chính, bấm nút tương tác rồi chọn \"Bán hết\".",
+		target = function()
+			return shopCounter("Sell")
+		end,
+		onStart = function(data)
+			stepStart.coins = data.coins
+		end,
+		cond = function(data)
+			return next(data.crops) == nil and data.coins > (stepStart.coins or math.huge)
+		end,
+	},
+	{
+		title = "🛒 Mua thêm hạt giống",
+		text = "Tới quầy 🌱 Hạt Giống và mua thêm hạt. Hạt đắt hơn lớn lâu hơn nhưng bán được nhiều xu hơn. Cửa hàng nhập hàng mới mỗi 5 phút!",
+		target = function()
+			return shopCounter("SeedShop")
+		end,
+		onStart = function(data)
+			stepStart.seeds = total(data.seeds)
+		end,
+		cond = function(data)
+			return total(data.seeds) > (stepStart.seeds or math.huge)
+		end,
+	},
+	{
+		title = "🐟 Nuôi thủy sản",
+		text = "Bạn được tặng 1 con Cá Rô Phi! Chọn nó ở thanh dưới rồi chạm vào một ao phía sau nông trại để thả. (Hết con giống thì mua ở quầy 🐟 Thủy Sản.)",
+		target = function(data)
+			if total(data.fry) == 0 then
+				return shopCounter("FishShop")
+			end
+			return plotPart("Ponds", "Pond1", "Rim")
+		end,
+		cond = function(data)
+			return next(data.ponds) ~= nil
+		end,
+	},
+	{
+		title = "🐾 Pet ngũ hành",
+		text = "Ở quầy 🐾 Cửa Hàng Pet có 5 pet theo Kim, Mộc, Thủy, Hỏa, Thổ. Mỗi hệ cho một buff riêng. Mua Mảnh Hợp Thể ở quầy 🛠 Dụng Cụ để hợp thể 2 pet thành pet mạnh hơn (nút 🐾 Pet bên phải).",
+		button = "Tiếp",
+		target = function()
+			return shopCounter("PetShop")
+		end,
+	},
+	{
+		title = "🏛 Nhà Triển Lãm Chung",
+		text = "Mỗi người có 1 khu 3 bục trong nhà triển lãm ở giữa map. Trưng bày pet hoặc nông sản quý (nút 🏛 bên phải) để nhận xu mỗi phút, và ghé khu của bạn bè bấm ❤ nhé!",
+		button = "Tiếp",
+		target = function()
+			return findPath("ExhibitionHall", "Banner")
+		end,
+	},
+	{
+		title = "🎉 Bạn đã sẵn sàng!",
+		text = "Hoàn thành hướng dẫn, nhận thưởng 200 xu! Muốn xem lại thì bấm nút ❓ bên phải màn hình. Chúc bạn làm giàu vui vẻ!",
+		button = "Nhận thưởng",
+		finish = true,
+	},
+}
+Tutorial.STEP_COUNT = #STEPS
+
+----------------------------------------------------------------
+-- GIAO DIỆN
+----------------------------------------------------------------
+local function new(class, props, parent)
+	local inst = Instance.new(class)
+	for k, v in pairs(props) do
+		(inst :: any)[k] = v
+	end
+	inst.Parent = parent
+	return inst
+end
+
+local function buildUI()
+	local card = new("Frame", {
+		Name = "TutorialCard",
+		Visible = false,
+		AnchorPoint = Vector2.new(0, 0),
+		Position = UDim2.new(0, 10, 0, 78),
+		Size = UDim2.new(0.42, 0, 0, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = Color3.fromRGB(255, 248, 225),
+		ZIndex = 20,
+	}, ctx.gui)
+	new("UICorner", { CornerRadius = UDim.new(0, 14) }, card)
+	new("UIStroke", { Color = Color3.fromRGB(240, 180, 50), Thickness = 3 }, card)
+	new("UISizeConstraint", { MaxSize = Vector2.new(380, 400), MinSize = Vector2.new(250, 0) }, card)
+	new("UIPadding", { PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 10) }, card)
+	new("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 4) }, card)
+
+	local function text(props, order)
+		props.BackgroundTransparency = 1
+		props.Size = UDim2.new(1, 0, 0, 0)
+		props.AutomaticSize = Enum.AutomaticSize.Y
+		props.TextWrapped = true
+		props.TextXAlignment = Enum.TextXAlignment.Left
+		props.LayoutOrder = order
+		props.ZIndex = 21
+		return new("TextLabel", props, card)
+	end
+	ui.progress = text({ Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Color3.fromRGB(190, 130, 30), Text = "" }, 1)
+	ui.title = text({ Font = Enum.Font.FredokaOne, TextSize = 18, TextColor3 = Color3.fromRGB(70, 50, 35), Text = "" }, 2)
+	ui.body = text({ Font = Enum.Font.Gotham, TextSize = 14, TextColor3 = Color3.fromRGB(90, 70, 55), Text = "" }, 3)
+
+	local bar = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 34), LayoutOrder = 4, ZIndex = 21 }, card)
+	local function btn(textValue, color, pos, anchor, size)
+		local b = new("TextButton", {
+			Text = textValue,
+			Font = Enum.Font.FredokaOne,
+			TextSize = 15,
+			TextColor3 = Color3.new(1, 1, 1),
+			BackgroundColor3 = color,
+			AnchorPoint = anchor,
+			Position = pos,
+			Size = size,
+			ZIndex = 22,
+		}, bar)
+		new("UICorner", { CornerRadius = UDim.new(0, 8) }, b)
+		return b
+	end
+	ui.next = btn("Tiếp", Color3.fromRGB(80, 185, 90), UDim2.new(1, 0, 0.5, 0), Vector2.new(1, 0.5), UDim2.fromOffset(110, 32))
+	ui.skip = btn("Bỏ qua", Color3.fromRGB(170, 160, 150), UDim2.new(0, 0, 0.5, 0), Vector2.new(0, 0.5), UDim2.fromOffset(80, 28))
+	ui.skip.TextSize = 12
+	ui.waiting = new("TextLabel", {
+		BackgroundTransparency = 1,
+		Text = "Làm theo hướng dẫn để tiếp tục...",
+		Font = Enum.Font.GothamBold,
+		TextSize = 12,
+		TextColor3 = Color3.fromRGB(80, 160, 90),
+		TextXAlignment = Enum.TextXAlignment.Right,
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, 0, 0.5, 0),
+		Size = UDim2.new(1, -90, 1, 0),
+		ZIndex = 22,
+	}, bar)
+	ui.card = card
+
+	ui.next.Activated:Connect(function()
+		local info = step and STEPS[step]
+		if info and info.button then
+			Tutorial.advance()
+		end
+	end)
+	ui.skip.Activated:Connect(function()
+		Tutorial.finish(false)
+	end)
+
+	-- tia sáng chỉ đường + mũi tên trên mục tiêu
+	local folder = new("Folder", { Name = "TutorialGuide" }, workspace)
+	guide.target = new("Attachment", { Name = "TutorialTarget" }, workspace.Terrain)
+	guide.beam = new("Beam", {
+		Attachment1 = guide.target,
+		Color = ColorSequence.new(Color3.fromRGB(255, 220, 80)),
+		LightEmission = 1,
+		Width0 = 0.5,
+		Width1 = 0.5,
+		FaceCamera = true,
+		Segments = 20,
+		CurveSize0 = 0,
+		Transparency = NumberSequence.new(0.2),
+		Texture = "rbxasset://textures/particles/sparkles_main.dds",
+		TextureMode = Enum.TextureMode.Wrap,
+		TextureLength = 3,
+		TextureSpeed = 2,
+		Enabled = false,
+	}, folder)
+	guide.marker = new("BillboardGui", {
+		Adornee = guide.target,
+		Size = UDim2.fromOffset(70, 70),
+		AlwaysOnTop = true,
+		StudsOffset = Vector3.new(0, 6, 0),
+		Enabled = false,
+	}, folder)
+	new("TextLabel", {
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Text = "⬇",
+		TextScaled = true,
+		Font = Enum.Font.GothamBlack,
+		TextColor3 = Color3.fromRGB(255, 220, 80),
+		TextStrokeTransparency = 0,
+	}, guide.marker)
+	TweenService:Create(guide.marker, TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+		StudsOffset = Vector3.new(0, 8, 0),
+	}):Play()
+end
+
+local function attachToCharacter()
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hrp and (not guide.from or guide.from.Parent ~= hrp) then
+		guide.from = new("Attachment", { Name = "TutorialFrom", Position = Vector3.new(0, -1, 0) }, hrp)
+		guide.beam.Attachment0 = guide.from
+	end
+	return hrp
+end
+
+local function updateGuide()
+	local s = ctx.getState()
+	local info = step and step > 0 and STEPS[step]
+	local targetPart = info and info.target and s.data and info.target(s.data)
+	if not targetPart or not targetPart:IsA("BasePart") then
+		guide.beam.Enabled = false
+		guide.marker.Enabled = false
+		return
+	end
+	guide.target.WorldPosition = targetPart.Position + Vector3.new(0, targetPart.Size.Y / 2 + 0.5, 0)
+	guide.marker.Enabled = true
+	local hrp = attachToCharacter()
+	local close = hrp and (hrp.Position - targetPart.Position).Magnitude < 12
+	guide.beam.Enabled = hrp ~= nil and not close
+end
+
+local function render()
+	if not step or step == 0 then
+		ui.card.Visible = false
+		updateGuide()
+		return
+	end
+	local info = STEPS[step]
+	ui.card.Visible = true
+	ui.progress.Text = string.format("HƯỚNG DẪN %d/%d", step, #STEPS)
+	ui.title.Text = info.title
+	ui.body.Text = info.text
+	ui.next.Visible = info.button ~= nil
+	ui.next.Text = info.button or ""
+	ui.waiting.Visible = info.button == nil
+	ui.skip.Visible = not info.finish
+	updateGuide()
+end
+
+local function enterStep(n)
+	step = n
+	stepStart = {}
+	local s = ctx.getState()
+	local info = STEPS[n]
+	if info and info.onStart and s.data then
+		info.onStart(s.data)
+	end
+	render()
+	-- bước đã đạt sẵn (vd. người chơi cũ) thì chuyển luôn
+	if info and info.cond and s.data and info.cond(s.data) then
+		task.defer(Tutorial.advance)
+	end
+end
+
+-- lưu bước lên server (gộp nhiều lần lưu liên tiếp thành 1 lần gửi)
+local pendingSave = nil
+local pendingCompleted = false
+local function save(n, completed)
+	pendingSave = n
+	pendingCompleted = completed == true
+end
+
+----------------------------------------------------------------
+-- API
+----------------------------------------------------------------
+function Tutorial.advance()
+	if not step or step == 0 then
+		return
+	end
+	local info = STEPS[step]
+	if info.finish then
+		Tutorial.finish(true)
+		return
+	end
+	local n = step + 1
+	save(n)
+	enterStep(n)
+end
+
+function Tutorial.finish(completed)
+	step = 0
+	save(0, completed)
+	render()
+end
+
+function Tutorial.restart()
+	save(1)
+	enterStep(1)
+end
+
+-- gọi mỗi khi nhận dữ liệu mới từ server
+function Tutorial.onData(data)
+	if step == nil then
+		local saved = tonumber(data.tutorial) or 0
+		if saved > #STEPS then
+			saved = 0
+		end
+		enterStep(saved)
+		return
+	end
+	local info = step > 0 and STEPS[step]
+	if info and info.cond and info.cond(data) then
+		Tutorial.advance()
+	else
+		render()
+	end
+end
+
+function Tutorial.init(options)
+	ctx = options
+	buildUI()
+	task.spawn(function()
+		while true do
+			task.wait(0.5)
+			if pendingSave ~= nil then
+				local n, completed = pendingSave, pendingCompleted
+				pendingSave = nil
+				local ok, success = pcall(function()
+					return ctx.request:InvokeServer("SetTutorial", n, completed)
+				end)
+				if not ok or not success then
+					if pendingSave == nil then
+						pendingSave = n -- thử lại lần sau
+					end
+				end
+			end
+			if step and step > 0 then
+				updateGuide()
+			end
+		end
+	end)
+end
+
+return Tutorial
+]]></string>
+          </Properties>
+        </Item>
+      </Item>
+    </Item>
+  </Item>
+</roblox>
