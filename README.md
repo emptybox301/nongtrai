@@ -1,4 +1,4 @@
-# 🌾 Nông Trại Ngũ Hành (Roblox)
+# 🌾 Nông Trại (Roblox)
 
 Game nông trại có pet ngũ hành, hợp thể, nhà triển lãm, cửa hàng hạt giống / pet / dụng cụ. Toàn bộ map và giao diện được tạo bằng code, không cần asset ngoài.
 
