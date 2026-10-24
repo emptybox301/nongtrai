@@ -977,4 +977,4 @@ task.spawn(function()
 	end
 end)
 
-toast("Chào mừng đến Nông Trại Ngũ Hành! 🌾", "rare")
+toast("Chào mừng đến Nông Trại! 🌾", "rare")

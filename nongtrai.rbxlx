@@ -17,7 +17,7 @@
       <Item class="ModuleScript" referent="3">
         <Properties>
           <string name="Name">Config</string>
-          <string name="Source"><![CDATA[-- Cấu hình toàn bộ game Nông Trại Ngũ Hành
+          <string name="Source"><![CDATA[-- Cấu hình toàn bộ game Nông Trại
 -- Sửa số liệu ở đây để cân bằng game.
 
 local Config = {}
@@ -1544,7 +1544,7 @@ task.spawn(function()
 	end
 end)
 
-print("[Nông Trại Ngũ Hành] Server đã sẵn sàng!")
+print("[Nông Trại] Server đã sẵn sàng!")
 ]]></string>
         </Properties>
       </Item>
@@ -3059,7 +3059,7 @@ task.spawn(function()
 	end
 end)
 
-toast("Chào mừng đến Nông Trại Ngũ Hành! 🌾", "rare")
+toast("Chào mừng đến Nông Trại! 🌾", "rare")
 ]]></string>
           </Properties>
         </Item>
@@ -3142,7 +3142,7 @@ end
 ----------------------------------------------------------------
 local STEPS = {
 	{
-		title = "🌾 Chào mừng đến Nông Trại Ngũ Hành!",
+		title = "🌾 Chào mừng đến Nông Trại!",
 		text = "Đây là nông trại của riêng bạn: 24 ô đất để trồng cây và 4 ao để nuôi cá. Mình sẽ hướng dẫn bạn vài bước đầu tiên nhé!",
 		button = "Bắt đầu",
 		target = function()

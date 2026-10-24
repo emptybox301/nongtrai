@@ -1019,4 +1019,4 @@ task.spawn(function()
 	end
 end)
 
-print("[Nông Trại Ngũ Hành] Server đã sẵn sàng!")
+print("[Nông Trại] Server đã sẵn sàng!")

@@ -74,7 +74,7 @@ end
 ----------------------------------------------------------------
 local STEPS = {
 	{
-		title = "🌾 Chào mừng đến Nông Trại Ngũ Hành!",
+		title = "🌾 Chào mừng đến Nông Trại!",
 		text = "Đây là nông trại của riêng bạn: 24 ô đất để trồng cây và 4 ao để nuôi cá. Mình sẽ hướng dẫn bạn vài bước đầu tiên nhé!",
 		button = "Bắt đầu",
 		target = function()

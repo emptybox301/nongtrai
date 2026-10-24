@@ -1,4 +1,4 @@
--- Cấu hình toàn bộ game Nông Trại Ngũ Hành
+-- Cấu hình toàn bộ game Nông Trại
 -- Sửa số liệu ở đây để cân bằng game.
 
 local Config = {}
