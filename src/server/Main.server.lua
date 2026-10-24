@@ -1,5 +1,5 @@
 -- NÔNG TRẠI NGŨ HÀNH - Server chính
--- Nông trại, cửa hàng, pet ngũ hành, hợp thể, nhà triển lãm
+-- Nông trại, cửa hàng, pet 5 hệ, hợp thể, nhà triển lãm
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")

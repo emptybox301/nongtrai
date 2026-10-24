@@ -1,4 +1,4 @@
--- Hàm dùng chung cho pet ngũ hành (server và client đều dùng)
+-- Hàm dùng chung cho pet 5 hệ (server và client đều dùng)
 local Config = require(script.Parent.Config)
 
 local PetUtil = {}
@@ -45,7 +45,7 @@ end
 function PetUtil.petName(pet)
 	local els = pet.els
 	if #els == 5 then
-		return "Ngũ Hành Thần Thú"
+		return "Thần Thú Ngũ Sắc"
 	elseif #els == 1 then
 		return Config.Elements[els[1]].petName
 	end
@@ -102,7 +102,7 @@ function PetUtil.buffLines(buffs)
 	return lines
 end
 
--- Quan hệ ngũ hành giữa 2 nhóm hệ
+-- Quan hệ tương sinh / tương khắc giữa 2 nhóm hệ
 function PetUtil.relation(elsA, elsB)
 	local sinh, khac = false, false
 	for _, a in ipairs(elsA) do

@@ -143,7 +143,7 @@ local STEPS = {
 		end,
 	},
 	{
-		title = "🐾 Pet ngũ hành",
+		title = "🐾 Pet 5 hệ",
 		text = "Ở quầy 🐾 Cửa Hàng Pet có 5 pet theo Kim, Mộc, Thủy, Hỏa, Thổ. Mỗi hệ cho một buff riêng. Mua Mảnh Hợp Thể ở quầy 🛠 Dụng Cụ để hợp thể 2 pet thành pet mạnh hơn (nút 🐾 Pet bên phải).",
 		button = "Tiếp",
 		target = function()

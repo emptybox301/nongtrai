@@ -1,6 +1,6 @@
 # 🌾 Nông Trại (Roblox)
 
-Game nông trại có pet ngũ hành, hợp thể, nhà triển lãm, cửa hàng hạt giống / pet / dụng cụ. Toàn bộ map và giao diện được tạo bằng code, không cần asset ngoài.
+Game nông trại có pet 5 hệ, hợp thể, nhà triển lãm, cửa hàng hạt giống / pet / dụng cụ. Toàn bộ map và giao diện được tạo bằng code, không cần asset ngoài.
 
 ## Cách mở
 
@@ -33,11 +33,11 @@ Nút bên phải màn hình: **Pet** (trang bị tối đa 3, hợp thể), **T�
 ### Hướng dẫn tân thủ
 Người chơi mới vào sẽ thấy khung hướng dẫn 9 bước ở góc trái, kèm tia sáng vàng và mũi tên ⬇ chỉ tới đúng chỗ cần đến:
 1. Giới thiệu nông trại → 2. Trồng Cà Rốt → 3. Thu hoạch → 4. Bán ở quầy Bán Hàng → 5. Mua thêm hạt →
-6. Thả cá xuống ao → 7. Giới thiệu pet ngũ hành & hợp thể → 8. Giới thiệu nhà triển lãm chung → 9. Nhận thưởng.
+6. Thả cá xuống ao → 7. Giới thiệu pet 5 hệ & hợp thể → 8. Giới thiệu nhà triển lãm chung → 9. Nhận thưởng.
 
 Các bước hành động tự chuyển khi người chơi làm xong. Hoàn thành được thưởng 200 xu (sửa `Config.TutorialReward`), bấm "Bỏ qua" thì không có thưởng. Tiến độ hướng dẫn được lưu, thoát ra vào lại vẫn tiếp tục đúng bước. Nội dung các bước nằm trong `src/client/Tutorial.lua`.
 
-## Hệ ngũ hành
+## Hệ pet
 
 | Hệ | Pet cơ bản | Buff |
 |---|---|---|
@@ -52,7 +52,7 @@ Các bước hành động tự chuyển khi người chơi làm xong. Hoàn th�
 - 2 pet khác hệ → pet đa hệ, giữ bậc cao nhất, có buff của tất cả các hệ.
 - **Tương sinh** (Mộc→Hỏa→Thổ→Kim→Thủy→Mộc): pet mới mạnh thêm 25% ☯.
 - **Tương khắc** (Mộc✕Thổ, Thổ✕Thủy, Thủy✕Hỏa, Hỏa✕Kim, Kim✕Mộc): chỉ 70% thành công, thất bại thì mất mảnh nhưng còn pet.
-- Gom đủ 5 hệ → **Ngũ Hành Thần Thú**.
+- Gom đủ 5 hệ → **Thần Thú Ngũ Sắc**.
 
 **Nhà triển lãm chung**: trưng bày pet, nông sản hoặc thủy sản ở khu của mình → nhận xu mỗi phút. Người chơi khác bấm ❤ ở khu của bạn → bạn nhận thưởng xu.
 

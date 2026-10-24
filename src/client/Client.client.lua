@@ -530,7 +530,7 @@ Renderers.PetShop = function()
 			{ "Mua", COLORS.green, function() call("BuyPet", e) end, data.coins < Config.BasicPetPrice },
 		})
 	end
-	header("☯ Ngũ hành")
+	header("☯ Quan hệ giữa các hệ")
 	note("Tương sinh: Mộc → Hỏa → Thổ → Kim → Thủy → Mộc. Hợp thể 2 pet tương sinh: pet mới mạnh thêm 25%.")
 	note("Tương khắc: Mộc ✕ Thổ, Thổ ✕ Thủy, Thủy ✕ Hỏa, Hỏa ✕ Kim, Kim ✕ Mộc. Hợp thể tương khắc chỉ thành công 70%.")
 end
@@ -673,7 +673,7 @@ Renderers.Pets = function()
 		end },
 	})
 	fuseRow.BackgroundColor3 = Color3.fromRGB(245, 235, 255)
-	note("Cùng hệ → lên 1 bậc. Khác hệ → pet đa hệ giữ bậc cao nhất. Gom đủ 5 hệ để có Ngũ Hành Thần Thú!")
+	note("Cùng hệ → lên 1 bậc. Khác hệ → pet đa hệ giữ bậc cao nhất. Gom đủ 5 hệ để có Thần Thú Ngũ Sắc!")
 
 	header(string.format("Danh sách pet (trang bị %d/%d)", #data.equipped, Config.MaxEquippedPets))
 	if #ids == 0 then

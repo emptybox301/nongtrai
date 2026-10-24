@@ -158,7 +158,7 @@ return Config
       <Item class="ModuleScript" referent="4">
         <Properties>
           <string name="Name">PetUtil</string>
-          <string name="Source"><![CDATA[-- Hàm dùng chung cho pet ngũ hành (server và client đều dùng)
+          <string name="Source"><![CDATA[-- Hàm dùng chung cho pet 5 hệ (server và client đều dùng)
 local Config = require(script.Parent.Config)
 
 local PetUtil = {}
@@ -205,7 +205,7 @@ end
 function PetUtil.petName(pet)
 	local els = pet.els
 	if #els == 5 then
-		return "Ngũ Hành Thần Thú"
+		return "Thần Thú Ngũ Sắc"
 	elseif #els == 1 then
 		return Config.Elements[els[1]].petName
 	end
@@ -262,7 +262,7 @@ function PetUtil.buffLines(buffs)
 	return lines
 end
 
--- Quan hệ ngũ hành giữa 2 nhóm hệ
+-- Quan hệ tương sinh / tương khắc giữa 2 nhóm hệ
 function PetUtil.relation(elsA, elsB)
 	local sinh, khac = false, false
 	for _, a in ipairs(elsA) do
@@ -524,7 +524,7 @@ return DataService
           <string name="Name">Main</string>
           <token name="RunContext">0</token>
           <string name="Source"><![CDATA[-- NÔNG TRẠI NGŨ HÀNH - Server chính
--- Nông trại, cửa hàng, pet ngũ hành, hợp thể, nhà triển lãm
+-- Nông trại, cửa hàng, pet 5 hệ, hợp thể, nhà triển lãm
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -2612,7 +2612,7 @@ Renderers.PetShop = function()
 			{ "Mua", COLORS.green, function() call("BuyPet", e) end, data.coins < Config.BasicPetPrice },
 		})
 	end
-	header("☯ Ngũ hành")
+	header("☯ Quan hệ giữa các hệ")
 	note("Tương sinh: Mộc → Hỏa → Thổ → Kim → Thủy → Mộc. Hợp thể 2 pet tương sinh: pet mới mạnh thêm 25%.")
 	note("Tương khắc: Mộc ✕ Thổ, Thổ ✕ Thủy, Thủy ✕ Hỏa, Hỏa ✕ Kim, Kim ✕ Mộc. Hợp thể tương khắc chỉ thành công 70%.")
 end
@@ -2755,7 +2755,7 @@ Renderers.Pets = function()
 		end },
 	})
 	fuseRow.BackgroundColor3 = Color3.fromRGB(245, 235, 255)
-	note("Cùng hệ → lên 1 bậc. Khác hệ → pet đa hệ giữ bậc cao nhất. Gom đủ 5 hệ để có Ngũ Hành Thần Thú!")
+	note("Cùng hệ → lên 1 bậc. Khác hệ → pet đa hệ giữ bậc cao nhất. Gom đủ 5 hệ để có Thần Thú Ngũ Sắc!")
 
 	header(string.format("Danh sách pet (trang bị %d/%d)", #data.equipped, Config.MaxEquippedPets))
 	if #ids == 0 then
@@ -3211,7 +3211,7 @@ local STEPS = {
 		end,
 	},
 	{
-		title = "🐾 Pet ngũ hành",
+		title = "🐾 Pet 5 hệ",
 		text = "Ở quầy 🐾 Cửa Hàng Pet có 5 pet theo Kim, Mộc, Thủy, Hỏa, Thổ. Mỗi hệ cho một buff riêng. Mua Mảnh Hợp Thể ở quầy 🛠 Dụng Cụ để hợp thể 2 pet thành pet mạnh hơn (nút 🐾 Pet bên phải).",
 		button = "Tiếp",
 		target = function()
